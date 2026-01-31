@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-white text-gray-900 antialiased;
+  }
+
+  /* Focus styles for accessibility */
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary-500;
+  }
+
+  /* Selection color */
+  ::selection {
+    @apply bg-primary-100 text-primary-900;
+  }
+}
+
+@layer components {
+  /* Typography */
+  .heading-hero {
+    @apply font-heading text-hero font-bold text-gray-900;
+  }
+
+  .heading-1 {
+    @apply font-heading text-h1 font-bold text-gray-900;
+  }
+
+  .heading-2 {
+    @apply font-heading text-h2 font-semibold text-gray-900;
+  }
+
+  .heading-3 {
+    @apply font-body text-h3 font-semibold text-gray-900;
+  }
+
+  .heading-4 {
+    @apply font-body text-h4 font-semibold text-gray-900;
+  }
+
+  .body-large {
+    @apply font-body text-body-lg text-gray-600;
+  }
+
+  .body-base {
+    @apply font-body text-body text-gray-600;
+  }
+
+  .body-small {
+    @apply font-body text-body-sm text-gray-500;
+  }
+
+  /* Container */
+  .container-custom {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Section spacing */
+  .section-padding {
+    @apply py-16 md:py-24 lg:py-32;
+  }
+
+  /* Card styles */
+  .card {
+    @apply rounded-2xl bg-white p-6 shadow-card transition-shadow duration-300 hover:shadow-card-hover;
+  }
+
+  /* Gradient backgrounds */
+  .gradient-primary {
+    @apply bg-gradient-to-r from-primary-500 to-primary-600;
+  }
+
+  .gradient-accent {
+    @apply bg-gradient-to-r from-accent-500 to-accent-600;
+  }
+
+  .gradient-hero {
+    @apply bg-gradient-to-br from-primary-50 via-white to-accent-50;
+  }
+}
+
+@layer utilities {
+  /* Text balance for headings */
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}

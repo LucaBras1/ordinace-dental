@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <title>Dentální Hygiena Icon</title>
+
+  <!-- Background circle for better visibility -->
+  <circle cx="24" cy="24" r="24" fill="#2E9BB8"/>
+
+  <!-- Tooth shape (white) -->
+  <path d="M24 10C20 10 16 12 14 16C12 12 8 10 4 10C1 10 0 12.5 0 16C0 20.5 2 27.5 5.5 33.5C7.5 36.5 9.5 39.5 12.5 42.5C14 44 15 45 15 45C15 45 16 44 17.5 42.5C20.5 39.5 22.5 36.5 24.5 33.5C28 27.5 30 20.5 30 16C30 12.5 29 10 26 10C22 10 18 12 16 16C14 12 10 10 6 10" fill="#FFFFFF" transform="translate(9, -2) scale(0.95)"/>
+
+  <!-- Sparkle accent (mint) -->
+  <circle cx="34" cy="14" r="2" fill="#1AB69A"/>
+  <path d="M34 11L34 17M31 14L37 14" stroke="#1AB69A" stroke-width="1.2" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 60" width="280" height="60" fill="none">
+  <title>Dentální Hygiena Logo</title>
+
+  <!-- Icon: Stylized tooth with sparkle -->
+  <g id="icon">
+    <!-- Tooth shape with shield outline -->
+    <path d="M30 8C25 8 20 10 18 14C16 10 11 8 6 8C2 8 0 11 0 15C0 20 2 28 6 35C8 38 10 42 14 46C16 48 18 50 18 50C18 50 20 48 22 46C26 42 28 38 30 35C34 28 36 20 36 15C36 11 34 8 30 8Z" fill="#2E9BB8" transform="translate(8, 4)"/>
+
+    <!-- Sparkle accent -->
+    <circle cx="42" cy="10" r="2.5" fill="#1AB69A"/>
+    <path d="M42 6L42 14M38 10L46 10" stroke="#1AB69A" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+
+  <!-- Text: Dentální Hygiena -->
+  <g id="text" fill="#1F2937">
+    <!-- "Dentální" -->
+    <text x="60" y="25" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="700" letter-spacing="-0.5">Dentální</text>
+
+    <!-- "Hygiena" -->
+    <text x="60" y="45" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="300" letter-spacing="0.5">Hygiena</text>
+  </g>
+
+  <!-- Subtle divider line -->
+  <line x1="60" y1="30" x2="160" y2="30" stroke="#1AB69A" stroke-width="1" opacity="0.3"/>
+</svg>
