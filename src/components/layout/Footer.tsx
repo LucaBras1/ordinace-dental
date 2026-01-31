@@ -16,9 +16,9 @@ const footerLinks = {
   ],
   info: [
     { name: 'FAQ', href: '/faq' },
-    { name: 'Blog', href: '/blog' },
     { name: 'Recenze', href: '/recenze' },
     { name: 'Pojišťovny', href: '/pojistovny' },
+    { name: 'Technologie', href: '/technologie' },
   ],
 }
 
