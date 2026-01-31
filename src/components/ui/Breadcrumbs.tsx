@@ -9,6 +9,8 @@ interface BreadcrumbsProps {
   items: BreadcrumbItem[]
 }
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://dentalni-hygiena.cz'
+
 export function Breadcrumbs({ items }: BreadcrumbsProps) {
   // Schema.org structured data
   const schemaData = {
@@ -18,7 +20,7 @@ export function Breadcrumbs({ items }: BreadcrumbsProps) {
       '@type': 'ListItem',
       position: index + 1,
       name: item.label,
-      ...(item.href && { item: `https://example.com${item.href}` }),
+      ...(item.href && { item: `${SITE_URL}${item.href}` }),
     })),
   }
 
@@ -38,6 +40,7 @@ export function Breadcrumbs({ items }: BreadcrumbsProps) {
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -55,7 +58,7 @@ export function Breadcrumbs({ items }: BreadcrumbsProps) {
                   {item.label}
                 </Link>
               ) : (
-                <span className="text-gray-900">{item.label}</span>
+                <span className="text-gray-900" aria-current="page">{item.label}</span>
               )}
             </li>
           ))}

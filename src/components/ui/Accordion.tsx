@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, type ReactNode } from 'react'
+import { useState, useId, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
 interface AccordionItemProps {
@@ -15,6 +15,7 @@ export function AccordionItem({
   defaultOpen = false,
 }: AccordionItemProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen)
+  const contentId = useId()
 
   return (
     <div className="border-b border-gray-200 last:border-b-0">
@@ -23,6 +24,7 @@ export function AccordionItem({
         onClick={() => setIsOpen(!isOpen)}
         className="flex w-full items-center justify-between py-5 text-left transition-colors hover:text-primary-600"
         aria-expanded={isOpen}
+        aria-controls={contentId}
       >
         <span className="pr-4 font-medium text-gray-900">{title}</span>
         <svg
@@ -33,6 +35,7 @@ export function AccordionItem({
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
+          aria-hidden="true"
         >
           <path
             strokeLinecap="round"
@@ -43,6 +46,8 @@ export function AccordionItem({
         </svg>
       </button>
       <div
+        id={contentId}
+        role="region"
         className={cn(
           'overflow-hidden transition-all duration-200',
           isOpen ? 'max-h-96 pb-5' : 'max-h-0'

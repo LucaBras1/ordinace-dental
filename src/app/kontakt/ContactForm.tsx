@@ -22,13 +22,18 @@ export function ContactForm() {
 
   if (isSubmitted) {
     return (
-      <div className="rounded-xl bg-success-50 p-6 text-center">
+      <div
+        className="rounded-xl bg-success-50 p-6 text-center"
+        role="status"
+        aria-live="polite"
+      >
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-success-100">
           <svg
             className="h-6 w-6 text-success-600"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"

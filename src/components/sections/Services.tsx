@@ -1,5 +1,8 @@
+'use client'
+
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
+import { AnimatedSection, AnimatedItem } from '@/components/ui/AnimatedSection'
 
 const services = [
   {
@@ -97,7 +100,7 @@ export function Services() {
     <section className="section-padding bg-white" id="sluzby">
       <div className="container-custom">
         {/* Header */}
-        <div className="mx-auto max-w-2xl text-center">
+        <AnimatedSection className="mx-auto max-w-2xl text-center">
           <span className="text-caption uppercase tracking-widest text-primary-600">
             Naše služby
           </span>
@@ -108,55 +111,57 @@ export function Services() {
             Nabízíme širokou škálu služeb dentální hygieny s využitím moderních
             technologií a šetrných postupů.
           </p>
-        </div>
+        </AnimatedSection>
 
         {/* Services grid */}
         <div className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {services.map((service) => (
-            <Link
-              key={service.title}
-              href={service.href}
-              className="group card flex flex-col"
-            >
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-50 text-primary-600 transition-colors group-hover:bg-primary-100">
-                {service.icon}
-              </div>
+          {services.map((service, index) => (
+            <AnimatedItem key={service.title} index={index} baseDelay={100}>
+              <Link
+                href={service.href}
+                className="group card flex h-full flex-col transition-transform duration-300 hover:scale-[1.02]"
+              >
+                <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-50 text-primary-600 transition-all duration-300 group-hover:bg-primary-100 group-hover:scale-110" aria-hidden="true">
+                  {service.icon}
+                </div>
 
-              <h3 className="heading-4 mt-6">{service.title}</h3>
+                <h3 className="heading-4 mt-6">{service.title}</h3>
 
-              <p className="body-small mt-3 flex-grow">{service.description}</p>
+                <p className="body-small mt-3 flex-grow">{service.description}</p>
 
-              <div className="mt-6 flex items-center justify-between">
-                <span className="font-semibold text-primary-600">
-                  {service.price}
-                </span>
-                <span className="flex items-center text-sm font-medium text-gray-600 transition-colors group-hover:text-primary-600">
-                  Více info
-                  <svg
-                    className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </span>
-              </div>
-            </Link>
+                <div className="mt-6 flex items-center justify-between">
+                  <span className="font-semibold text-primary-600">
+                    {service.price}
+                  </span>
+                  <span className="flex items-center text-sm font-medium text-gray-600 transition-colors group-hover:text-primary-600">
+                    Více info
+                    <svg
+                      className="ml-1 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </span>
+                </div>
+              </Link>
+            </AnimatedItem>
           ))}
         </div>
 
         {/* CTA */}
-        <div className="mt-12 text-center">
+        <AnimatedSection className="mt-12 text-center" delay={300}>
           <Button variant="outline" size="lg" asChild>
             <Link href="/sluzby">Zobrazit všechny služby</Link>
           </Button>
-        </div>
+        </AnimatedSection>
       </div>
     </section>
   )

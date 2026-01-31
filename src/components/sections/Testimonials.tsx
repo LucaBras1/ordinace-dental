@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { AnimatedSection } from '@/components/ui/AnimatedSection'
 
 const testimonials = [
   {
@@ -36,37 +37,43 @@ export function Testimonials() {
     <section className="section-padding bg-gray-50" id="recenze">
       <div className="container-custom">
         {/* Header */}
-        <div className="mx-auto max-w-2xl text-center">
+        <AnimatedSection className="mx-auto max-w-2xl text-center">
           <span className="text-caption uppercase tracking-widest text-primary-600">
             Recenze
           </span>
           <h2 className="heading-2 mt-4 text-balance">
             Co říkají naši pacienti
           </h2>
-        </div>
+        </AnimatedSection>
 
         {/* Testimonials carousel */}
-        <div className="mt-12">
+        <AnimatedSection className="mt-12" delay={200}>
           <div className="mx-auto max-w-3xl">
             {/* Active testimonial */}
-            <div className="relative rounded-3xl bg-white p-8 shadow-card md:p-12">
+            <div
+              className="relative rounded-3xl bg-white p-8 shadow-card transition-shadow duration-300 hover:shadow-card-hover md:p-12"
+              aria-live="polite"
+              aria-atomic="true"
+            >
               {/* Quote icon */}
               <svg
                 className="absolute left-8 top-8 h-12 w-12 text-primary-100"
                 fill="currentColor"
                 viewBox="0 0 32 32"
+                aria-hidden="true"
               >
                 <path d="M9.352 4C4.456 7.456 1 13.12 1 19.36c0 5.088 3.072 8.064 6.624 8.064 3.36 0 5.856-2.688 5.856-5.856 0-3.168-2.208-5.472-5.088-5.472-.576 0-1.344.096-1.536.192.48-3.264 3.552-7.104 6.624-9.024L9.352 4zm16.512 0c-4.8 3.456-8.256 9.12-8.256 15.36 0 5.088 3.072 8.064 6.624 8.064 3.264 0 5.856-2.688 5.856-5.856 0-3.168-2.304-5.472-5.184-5.472-.576 0-1.248.096-1.44.192.48-3.264 3.456-7.104 6.528-9.024L25.864 4z" />
               </svg>
 
               {/* Rating */}
-              <div className="mb-6 flex justify-center gap-1">
+              <div className="mb-6 flex justify-center gap-1" aria-label={`Hodnocení: ${testimonials[activeIndex].rating} z 5 hvězdiček`}>
                 {[...Array(testimonials[activeIndex].rating)].map((_, i) => (
                   <svg
                     key={i}
                     className="h-5 w-5 text-yellow-400"
                     fill="currentColor"
                     viewBox="0 0 20 20"
+                    aria-hidden="true"
                   >
                     <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                   </svg>
@@ -79,36 +86,38 @@ export function Testimonials() {
               </blockquote>
 
               {/* Author */}
-              <div className="mt-8 text-center">
+              <footer className="mt-8 text-center">
                 <div className="font-semibold text-gray-900">
                   {testimonials[activeIndex].author}
                 </div>
                 <div className="text-sm text-gray-500">
                   {testimonials[activeIndex].role}
                 </div>
-              </div>
+              </footer>
             </div>
 
             {/* Navigation dots */}
-            <div className="mt-8 flex justify-center gap-2">
-              {testimonials.map((_, index) => (
+            <div className="mt-8 flex justify-center gap-2" role="tablist" aria-label="Recenze">
+              {testimonials.map((testimonial, index) => (
                 <button
                   key={index}
                   onClick={() => setActiveIndex(index)}
-                  className={`h-2 rounded-full transition-all ${
+                  className={`h-2 rounded-full transition-all duration-300 ${
                     index === activeIndex
                       ? 'w-8 bg-primary-500'
                       : 'w-2 bg-gray-300 hover:bg-gray-400'
                   }`}
-                  aria-label={`Zobrazit recenzi ${index + 1}`}
+                  role="tab"
+                  aria-selected={index === activeIndex}
+                  aria-label={`Recenze od ${testimonial.author}`}
                 />
               ))}
             </div>
           </div>
-        </div>
+        </AnimatedSection>
 
         {/* Google rating */}
-        <div className="mt-12 flex items-center justify-center gap-4">
+        <AnimatedSection className="mt-12 flex items-center justify-center gap-4" delay={300}>
           <div className="flex items-center gap-2">
             <svg className="h-8 w-8" viewBox="0 0 24 24">
               <path
@@ -133,7 +142,7 @@ export function Testimonials() {
               <span className="text-gray-500"> (127 recenzí)</span>
             </div>
           </div>
-        </div>
+        </AnimatedSection>
       </div>
     </section>
   )

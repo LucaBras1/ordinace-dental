@@ -7,8 +7,10 @@ Moderní webové stránky pro ordinaci dentální hygieny vytvořené v Next.js 
 - **15 plně responzivních stránek** - od homepage po právní dokumenty
 - **Moderní design** - healthcare design s důrazem na důvěru a profesionalitu
 - **SEO optimalizace** - meta tagy, strukturovaná data (Schema.org)
-- **Přístupnost** - WCAG 2.1 AA kompatibilita
+- **Přístupnost** - WCAG 2.1 AA kompatibilita, ARIA atributy, screen reader support
 - **Rychlý výkon** - staticky generované stránky, optimalizované obrázky
+- **Scroll animace** - plynulé fade-in animace při scrollování s respektem k `prefers-reduced-motion`
+- **Plně funkční mobile menu** - backdrop overlay, scroll lock, klávesová navigace (Escape)
 
 ## Struktura stránek
 
@@ -65,10 +67,18 @@ Projekt obsahuje vlastní knihovnu UI komponent:
 | `Input` | Formulářový input s validací |
 | `Textarea` | Víceřádkové textové pole |
 | `Select` | Dropdown výběr |
-| `Accordion` | Akordeon pro FAQ sekce |
+| `Accordion` | Akordeon pro FAQ sekce s ARIA atributy |
 | `PriceTable` | Tabulka s cenami |
 | `ContactInfo` | Kontaktní údaje s hodinami |
 | `Map` | Embed mapa |
+| `AnimatedSection` | Wrapper pro scroll-triggered animace |
+| `AnimatedItem` | Staggered animace pro položky v seznamech |
+
+## Custom Hooks
+
+| Hook | Popis |
+|------|-------|
+| `useScrollAnimation` | Intersection Observer hook pro scroll animace s podporou `prefers-reduced-motion` |
 
 ## Instalace
 
@@ -95,6 +105,8 @@ npm start
 ```
 src/
 ├── app/                    # Next.js App Router stránky
+│   ├── layout.tsx         # Root layout (Header + Footer)
+│   ├── globals.css        # Globální styly + animace
 │   ├── page.tsx           # Homepage
 │   ├── kontakt/           # Kontaktní stránka
 │   ├── sluzby/            # Služby + detaily
@@ -111,6 +123,8 @@ src/
 │   ├── layout/            # Header, Footer
 │   ├── sections/          # Hero, Services, About, etc.
 │   └── ui/                # Reusable UI komponenty
+├── hooks/
+│   └── useScrollAnimation.ts  # Intersection Observer hook
 ├── lib/
 │   └── utils.ts           # Utility funkce (cn)
 └── public/

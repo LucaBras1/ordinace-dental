@@ -1,5 +1,8 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
+import { AnimatedSection, AnimatedItem } from '@/components/ui/AnimatedSection'
 
 const technologies = [
   {
@@ -90,7 +93,7 @@ export function Technology() {
       <div className="container-custom">
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
           {/* Content */}
-          <div>
+          <AnimatedSection animation="fade-in-up">
             <span className="text-caption uppercase tracking-widest text-primary-600">
               Technologie
             </span>
@@ -105,31 +108,34 @@ export function Technology() {
 
             {/* Technology list */}
             <div className="mt-8 grid gap-6 sm:grid-cols-2">
-              {technologies.map((tech) => (
-                <div key={tech.name} className="flex gap-4">
-                  <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600">
-                    {tech.icon}
+              {technologies.map((tech, index) => (
+                <AnimatedItem key={tech.name} index={index} baseDelay={150}>
+                  <div className="flex gap-4">
+                    <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-accent-50 text-accent-600 transition-all duration-300 hover:scale-110 hover:bg-accent-100" aria-hidden="true">
+                      {tech.icon}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{tech.name}</h3>
+                      <p className="mt-1 text-sm text-gray-600">
+                        {tech.description}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{tech.name}</h3>
-                    <p className="mt-1 text-sm text-gray-600">
-                      {tech.description}
-                    </p>
-                  </div>
-                </div>
+                </AnimatedItem>
               ))}
             </div>
 
             <Link
               href="/technologie"
-              className="mt-8 inline-flex items-center font-medium text-primary-600 transition-colors hover:text-primary-700"
+              className="group mt-8 inline-flex items-center font-medium text-primary-600 transition-colors hover:text-primary-700"
             >
               Prohlédnout virtuální prohlídku
               <svg
-                className="ml-2 h-4 w-4"
+                className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
@@ -139,21 +145,21 @@ export function Technology() {
                 />
               </svg>
             </Link>
-          </div>
+          </AnimatedSection>
 
           {/* Image */}
-          <div className="relative">
+          <AnimatedSection animation="fade-in-up" delay={200} className="relative">
             <div className="aspect-square overflow-hidden rounded-3xl">
               <Image
                 src="/images/office.jpg"
                 alt="Moderní dentální ordinace"
                 fill
-                className="object-cover"
+                className="object-cover transition-transform duration-700 hover:scale-105"
               />
             </div>
 
             {/* Badge */}
-            <div className="absolute -left-4 top-8 rounded-2xl bg-white p-4 shadow-card-hover">
+            <div className="absolute -left-4 top-8 rounded-2xl bg-white p-4 shadow-card-hover transition-transform duration-300 hover:scale-105">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-100">
                   <svg
@@ -161,6 +167,7 @@ export function Technology() {
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
+                    aria-hidden="true"
                   >
                     <path
                       strokeLinecap="round"
@@ -175,7 +182,7 @@ export function Technology() {
                 </span>
               </div>
             </div>
-          </div>
+          </AnimatedSection>
         </div>
       </div>
     </section>

@@ -37,13 +37,18 @@ export function BookingForm() {
 
   if (isSubmitted) {
     return (
-      <div className="rounded-xl bg-success-50 p-8 text-center">
+      <div
+        className="rounded-xl bg-success-50 p-8 text-center"
+        role="status"
+        aria-live="polite"
+      >
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-success-100">
           <svg
             className="h-8 w-8 text-success-600"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"

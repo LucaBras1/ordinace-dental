@@ -1,17 +1,20 @@
+'use client'
+
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
+import { AnimatedSection } from '@/components/ui/AnimatedSection'
 
 export function CTA() {
   return (
     <section className="section-padding relative overflow-hidden bg-primary-600">
       {/* Background decoration */}
       <div className="absolute inset-0 -z-10">
-        <div className="absolute -left-40 -top-40 h-80 w-80 rounded-full bg-primary-500/50 blur-3xl" />
-        <div className="absolute -bottom-40 -right-40 h-80 w-80 rounded-full bg-accent-500/30 blur-3xl" />
+        <div className="absolute -left-40 -top-40 h-80 w-80 animate-pulse-subtle rounded-full bg-primary-500/50 blur-3xl" />
+        <div className="absolute -bottom-40 -right-40 h-80 w-80 animate-pulse-subtle rounded-full bg-accent-500/30 blur-3xl" style={{ animationDelay: '1s' }} />
       </div>
 
       <div className="container-custom">
-        <div className="mx-auto max-w-3xl text-center">
+        <AnimatedSection className="mx-auto max-w-3xl text-center">
           <h2 className="font-heading text-3xl font-bold text-white sm:text-4xl lg:text-5xl">
             Připraveni na zdravější úsměv?
           </h2>
@@ -23,7 +26,7 @@ export function CTA() {
           <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
             <Button
               size="lg"
-              className="bg-white text-primary-600 hover:bg-gray-100"
+              className="bg-white text-primary-600 transition-all duration-300 hover:scale-105 hover:bg-gray-100"
               asChild
             >
               <Link href="/objednavka">
@@ -33,6 +36,7 @@ export function CTA() {
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -46,7 +50,7 @@ export function CTA() {
             <Button
               size="lg"
               variant="outline"
-              className="border-white text-white hover:bg-white/10"
+              className="border-white text-white transition-all duration-300 hover:scale-105 hover:bg-white/10"
               asChild
             >
               <Link href="tel:+420123456789">
@@ -55,6 +59,7 @@ export function CTA() {
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
+                  aria-hidden="true"
                 >
                   <path
                     strokeLinecap="round"
@@ -76,6 +81,7 @@ export function CTA() {
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
@@ -92,6 +98,7 @@ export function CTA() {
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
@@ -108,6 +115,7 @@ export function CTA() {
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
+                aria-hidden="true"
               >
                 <path
                   strokeLinecap="round"
@@ -119,7 +127,7 @@ export function CTA() {
               <span className="text-sm">Platba kartou</span>
             </div>
           </div>
-        </div>
+        </AnimatedSection>
       </div>
     </section>
   )
