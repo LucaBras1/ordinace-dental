@@ -99,11 +99,17 @@
   }
 
   .glass-card {
-    @apply bg-white/70 backdrop-blur-[20px] border border-white/30 shadow-glass;
+    @apply bg-white/70 backdrop-blur-[20px] border border-white/30;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
   }
 
   .glass-card-hover {
-    @apply hover:bg-white/80 hover:shadow-glass-hover transition-all duration-300;
+    @apply transition-all duration-300;
+  }
+
+  .glass-card-hover:hover {
+    @apply bg-white/80;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.6);
   }
 
   /* Gradient text */
@@ -136,11 +142,11 @@
 
   /* Glow effects */
   .glow-primary {
-    @apply shadow-glow-primary;
+    box-shadow: 0 0 40px -5px rgba(46, 155, 184, 0.4);
   }
 
   .glow-accent {
-    @apply shadow-glow-accent;
+    box-shadow: 0 0 40px -5px rgba(26, 182, 154, 0.4);
   }
 }
 

@@ -143,7 +143,44 @@ export async function GET(request: NextRequest) {
       { status: 200 }
     )
   } catch (error) {
-    console.error('[API] Error fetching availability:', error)
+    console.error('[API] Error fetching availability, using fallback:', error)
+
+    // Fallback: return all slots as available when database is not available
+    const searchParams = request.nextUrl.searchParams
+    const dateParam = searchParams.get('date')
+
+    if (dateParam) {
+      const dateObj = new Date(dateParam)
+      const dayOfWeek = dateObj.getDay()
+
+      // Weekend check
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        return NextResponse.json(
+          {
+            date: dateParam,
+            slots: [],
+            message: 'Office is closed on weekends',
+          },
+          { status: 200 }
+        )
+      }
+
+      // Return all slots as available (no database to check bookings)
+      const allSlots = generateTimeSlots(dateParam)
+      const slots = allSlots.map((time) => ({
+        time,
+        available: true,
+      }))
+
+      return NextResponse.json(
+        {
+          date: dateParam,
+          slots,
+          fallbackMode: true,
+        },
+        { status: 200 }
+      )
+    }
 
     return NextResponse.json(
       {
