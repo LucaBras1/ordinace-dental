@@ -1,14 +1,24 @@
 'use client'
 
-import { forwardRef, type ButtonHTMLAttributes } from 'react'
+import { forwardRef, useCallback, useRef, useState, type ButtonHTMLAttributes, type MouseEvent } from 'react'
 import { Slot } from '@radix-ui/react-slot'
 import { cn } from '@/lib/utils'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost'
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'gradient'
   size?: 'sm' | 'md' | 'lg'
   isLoading?: boolean
   asChild?: boolean
+  magnetic?: boolean
+  ripple?: boolean
+}
+
+interface RippleStyle {
+  left: number
+  top: number
+  width: number
+  height: number
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -19,16 +29,23 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       size = 'md',
       isLoading = false,
       asChild = false,
+      magnetic = false,
+      ripple = true,
       disabled,
       children,
+      onClick,
       ...props
     },
     ref
   ) => {
     const Comp = asChild ? Slot : 'button'
+    const prefersReducedMotion = useReducedMotion()
+    const buttonRef = useRef<HTMLButtonElement>(null)
+    const [magneticOffset, setMagneticOffset] = useState({ x: 0, y: 0 })
+    const [ripples, setRipples] = useState<RippleStyle[]>([])
 
     const baseStyles =
-      'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none'
+      'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none relative overflow-hidden'
 
     const variants = {
       primary:
@@ -39,6 +56,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         'border-2 border-primary-500 text-primary-600 hover:bg-primary-50 active:bg-primary-100',
       ghost:
         'text-gray-600 hover:text-gray-900 hover:bg-gray-100 active:bg-gray-200',
+      gradient:
+        'bg-gradient-primary text-white hover:bg-gradient-primary-hover shadow-button hover:shadow-glow-primary active:shadow-md transition-shadow',
     }
 
     const sizes = {
@@ -47,13 +66,100 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       lg: 'h-14 px-8 text-lg',
     }
 
+    // Magnetic effect
+    const handleMouseMove = useCallback(
+      (e: MouseEvent<HTMLButtonElement>) => {
+        if (!magnetic || prefersReducedMotion || !buttonRef.current) return
+
+        const rect = buttonRef.current.getBoundingClientRect()
+        const centerX = rect.left + rect.width / 2
+        const centerY = rect.top + rect.height / 2
+
+        const distanceX = e.clientX - centerX
+        const distanceY = e.clientY - centerY
+
+        setMagneticOffset({
+          x: distanceX * 0.2,
+          y: distanceY * 0.2,
+        })
+      },
+      [magnetic, prefersReducedMotion]
+    )
+
+    const handleMouseLeave = useCallback(() => {
+      setMagneticOffset({ x: 0, y: 0 })
+    }, [])
+
+    // Ripple effect
+    const handleClick = useCallback(
+      (e: MouseEvent<HTMLButtonElement>) => {
+        if (ripple && !prefersReducedMotion && buttonRef.current) {
+          const rect = buttonRef.current.getBoundingClientRect()
+          const size = Math.max(rect.width, rect.height)
+          const x = e.clientX - rect.left - size / 2
+          const y = e.clientY - rect.top - size / 2
+
+          const newRipple: RippleStyle = {
+            left: x,
+            top: y,
+            width: size,
+            height: size,
+          }
+
+          setRipples((prev) => [...prev, newRipple])
+
+          setTimeout(() => {
+            setRipples((prev) => prev.slice(1))
+          }, 600)
+        }
+
+        onClick?.(e)
+      },
+      [ripple, prefersReducedMotion, onClick]
+    )
+
+    const magneticStyle = magnetic
+      ? {
+          transform: `translate(${magneticOffset.x}px, ${magneticOffset.y}px)`,
+          transition: 'transform 0.2s ease-out',
+        }
+      : undefined
+
+    // Combine refs
+    const combinedRef = (node: HTMLButtonElement | null) => {
+      (buttonRef as React.MutableRefObject<HTMLButtonElement | null>).current = node
+      if (typeof ref === 'function') {
+        ref(node)
+      } else if (ref) {
+        (ref as React.MutableRefObject<HTMLButtonElement | null>).current = node
+      }
+    }
+
     return (
       <Comp
-        ref={ref}
+        ref={combinedRef}
         className={cn(baseStyles, variants[variant], sizes[size], className)}
         disabled={disabled || isLoading}
+        style={magneticStyle}
+        onMouseMove={magnetic ? handleMouseMove : undefined}
+        onMouseLeave={magnetic ? handleMouseLeave : undefined}
+        onClick={handleClick}
         {...props}
       >
+        {/* Ripple effects */}
+        {ripples.map((ripple, index) => (
+          <span
+            key={index}
+            className="absolute rounded-full bg-white/30 animate-ripple pointer-events-none"
+            style={{
+              left: ripple.left,
+              top: ripple.top,
+              width: ripple.width,
+              height: ripple.height,
+            }}
+          />
+        ))}
+
         {isLoading ? (
           <>
             <svg

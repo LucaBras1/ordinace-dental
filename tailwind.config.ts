@@ -56,6 +56,13 @@ const config: Config = {
           DEFAULT: '#3B82F6',
           dark: '#1D4ED8',
         },
+        // Glassmorphism colors
+        glass: {
+          white: 'rgba(255, 255, 255, 0.7)',
+          'white-strong': 'rgba(255, 255, 255, 0.85)',
+          primary: 'rgba(46, 155, 184, 0.1)',
+          accent: 'rgba(26, 182, 154, 0.1)',
+        },
       },
       fontFamily: {
         heading: ['var(--font-playfair)', 'Georgia', 'serif'],
@@ -85,6 +92,29 @@ const config: Config = {
         'card': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
         'card-hover': '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
         'button': '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
+        // Glassmorphism shadows
+        'glass': '0 8px 32px rgba(0, 0, 0, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.5)',
+        'glass-hover': '0 16px 48px rgba(0, 0, 0, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.6)',
+        'glass-sm': '0 4px 16px rgba(0, 0, 0, 0.06), inset 0 0 0 1px rgba(255, 255, 255, 0.4)',
+        // Glow effects
+        'glow-primary': '0 0 40px -5px rgba(46, 155, 184, 0.4)',
+        'glow-accent': '0 0 40px -5px rgba(26, 182, 154, 0.4)',
+        'glow-primary-lg': '0 0 60px -10px rgba(46, 155, 184, 0.5)',
+      },
+      backgroundImage: {
+        // Premium gradient mesh
+        'gradient-mesh': 'radial-gradient(at 40% 20%, hsla(185, 60%, 65%, 0.15) 0px, transparent 50%), radial-gradient(at 80% 0%, hsla(165, 60%, 52%, 0.1) 0px, transparent 50%), radial-gradient(at 0% 50%, hsla(185, 60%, 65%, 0.08) 0px, transparent 50%)',
+        'gradient-mesh-hero': 'radial-gradient(at 10% 90%, hsla(185, 60%, 65%, 0.12) 0px, transparent 40%), radial-gradient(at 90% 10%, hsla(165, 60%, 52%, 0.1) 0px, transparent 40%)',
+        // Premium hero background
+        'hero-premium': 'linear-gradient(135deg, rgba(46, 155, 184, 0.03) 0%, rgba(255, 255, 255, 0.98) 50%, rgba(26, 182, 154, 0.03) 100%)',
+        // Button gradients
+        'gradient-primary': 'linear-gradient(135deg, #2E9BB8 0%, #2581A0 100%)',
+        'gradient-accent': 'linear-gradient(135deg, #1AB69A 0%, #159580 100%)',
+        'gradient-primary-hover': 'linear-gradient(135deg, #2581A0 0%, #1C6788 100%)',
+      },
+      backdropBlur: {
+        'glass': '20px',
+        'glass-lg': '30px',
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-out',
@@ -96,6 +126,17 @@ const config: Config = {
         'float': 'float 6s ease-in-out infinite',
         'pulse-subtle': 'pulseSubtle 2s ease-in-out infinite',
         'shimmer': 'shimmer 2s infinite',
+        // Premium animations
+        'gradient-shift': 'gradientShift 8s ease infinite',
+        'ripple': 'ripple 0.6s linear forwards',
+        'pulse-glow': 'pulseGlow 2s ease-in-out infinite',
+        'counter': 'counter 2s ease-out forwards',
+        'slide-in-right': 'slideInRight 0.3s ease-out',
+        'slide-in-left': 'slideInLeft 0.3s ease-out',
+        'slide-out-right': 'slideOutRight 0.3s ease-out',
+        'toast-in': 'toastIn 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+        'toast-out': 'toastOut 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+        'progress': 'progress linear forwards',
       },
       keyframes: {
         fadeIn: {
@@ -133,6 +174,47 @@ const config: Config = {
         shimmer: {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
+        },
+        // Premium keyframes
+        gradientShift: {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+        },
+        ripple: {
+          '0%': { transform: 'scale(0)', opacity: '0.5' },
+          '100%': { transform: 'scale(4)', opacity: '0' },
+        },
+        pulseGlow: {
+          '0%, 100%': { opacity: '1', boxShadow: '0 0 20px -5px rgba(46, 155, 184, 0.4)' },
+          '50%': { opacity: '0.8', boxShadow: '0 0 40px -5px rgba(46, 155, 184, 0.6)' },
+        },
+        counter: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        slideInRight: {
+          '0%': { transform: 'translateX(100%)', opacity: '0' },
+          '100%': { transform: 'translateX(0)', opacity: '1' },
+        },
+        slideInLeft: {
+          '0%': { transform: 'translateX(-100%)', opacity: '0' },
+          '100%': { transform: 'translateX(0)', opacity: '1' },
+        },
+        slideOutRight: {
+          '0%': { transform: 'translateX(0)', opacity: '1' },
+          '100%': { transform: 'translateX(100%)', opacity: '0' },
+        },
+        toastIn: {
+          '0%': { transform: 'translateX(calc(100% + 24px))', opacity: '0' },
+          '100%': { transform: 'translateX(0)', opacity: '1' },
+        },
+        toastOut: {
+          '0%': { transform: 'translateX(0)', opacity: '1' },
+          '100%': { transform: 'translateX(calc(100% + 24px))', opacity: '0' },
+        },
+        progress: {
+          '0%': { width: '100%' },
+          '100%': { width: '0%' },
         },
       },
       transitionTimingFunction: {

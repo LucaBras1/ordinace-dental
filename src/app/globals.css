@@ -88,12 +88,87 @@
   .gradient-hero {
     @apply bg-gradient-to-br from-primary-50 via-white to-accent-50;
   }
+
+  /* Glassmorphism styles */
+  .glass {
+    @apply bg-white/70 backdrop-blur-[20px] border border-white/30;
+  }
+
+  .glass-strong {
+    @apply bg-white/85 backdrop-blur-[30px] border border-white/40;
+  }
+
+  .glass-card {
+    @apply bg-white/70 backdrop-blur-[20px] border border-white/30 shadow-glass;
+  }
+
+  .glass-card-hover {
+    @apply hover:bg-white/80 hover:shadow-glass-hover transition-all duration-300;
+  }
+
+  /* Gradient text */
+  .text-gradient-primary {
+    @apply bg-gradient-to-r from-primary-600 to-accent-500 bg-clip-text text-transparent;
+  }
+
+  .text-gradient-accent {
+    @apply bg-gradient-to-r from-accent-500 to-primary-500 bg-clip-text text-transparent;
+  }
+
+  /* Animated underline link */
+  .link-underline {
+    @apply relative;
+  }
+
+  .link-underline::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-0 h-0.5 bg-primary-500 transition-all duration-300;
+  }
+
+  .link-underline:hover::after {
+    @apply w-full;
+  }
+
+  /* Premium button gradient */
+  .btn-gradient {
+    @apply bg-gradient-primary hover:bg-gradient-primary-hover transition-all duration-300;
+  }
+
+  /* Glow effects */
+  .glow-primary {
+    @apply shadow-glow-primary;
+  }
+
+  .glow-accent {
+    @apply shadow-glow-accent;
+  }
 }
 
 @layer utilities {
   /* Text balance for headings */
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Touch target size for accessibility */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Skip link for accessibility */
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary-500 focus:text-white focus:rounded-lg;
+  }
+
+  /* Ripple effect container */
+  .ripple-container {
+    @apply relative overflow-hidden;
+  }
+
+  /* Magnetic button effect */
+  .magnetic {
+    @apply transition-transform duration-200 ease-out;
   }
 
   /* Hide scrollbar but keep functionality */
