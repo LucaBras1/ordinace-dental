@@ -33,7 +33,7 @@ jobs:
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
-            cd /root/www/hosting/muzx.cz/dentalka
+            cd /www/hosting/muzx.cz/dentalka
             git pull origin main
             export NODE_OPTIONS="--max-old-space-size=4096"
             export NVM_DIR="$HOME/.nvm"
