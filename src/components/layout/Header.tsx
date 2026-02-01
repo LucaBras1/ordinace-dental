@@ -11,6 +11,7 @@ const navigation = [
   { name: 'Služby', href: '/sluzby' },
   { name: 'Technologie', href: '/technologie' },
   { name: 'Ceník', href: '/cenik' },
+  { name: 'Rezervace', href: '/objednavka' },
   { name: 'Kontakt', href: '/kontakt' },
 ]
 
