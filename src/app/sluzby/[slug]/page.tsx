@@ -388,6 +388,7 @@ export default async function ServiceDetailPage({ params }: PageProps) {
           { label: 'Služby', href: '/sluzby' },
           { label: service.title },
         ]}
+        showBreadcrumbs={true}
       />
 
       {/* Hero image */}
