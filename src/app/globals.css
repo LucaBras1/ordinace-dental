@@ -49,6 +49,26 @@
     @apply font-body text-h4 font-semibold text-gray-900;
   }
 
+  /* Display typography - World-class level */
+  .heading-display {
+    @apply font-heading text-display font-bold text-gray-900 tracking-tight;
+  }
+
+  .heading-display-lg {
+    @apply font-heading text-display-lg font-bold text-gray-900;
+    letter-spacing: -0.03em;
+  }
+
+  .heading-display-xl {
+    @apply font-heading text-display-xl font-bold text-gray-900;
+    letter-spacing: -0.03em;
+  }
+
+  .heading-display-2xl {
+    @apply font-heading text-display-2xl font-bold text-gray-900;
+    letter-spacing: -0.04em;
+  }
+
   .body-large {
     @apply font-body text-body-lg text-gray-600;
   }
@@ -148,12 +168,92 @@
   .glow-accent {
     box-shadow: 0 0 40px -5px rgba(26, 182, 154, 0.4);
   }
+
+  /* Text glow effect */
+  .text-glow {
+    text-shadow: 0 0 40px rgba(46, 155, 184, 0.3);
+  }
+
+  .text-glow-accent {
+    text-shadow: 0 0 40px rgba(26, 182, 154, 0.3);
+  }
+
+  /* Animated text gradient */
+  .text-gradient-animated {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #2E9BB8 0%, #1AB69A 50%, #2E9BB8 100%);
+    background-size: 200% auto;
+    animation: textShimmer 3s ease-in-out infinite;
+  }
+
+  /* Button shine effect */
+  .btn-shine {
+    @apply relative overflow-hidden;
+  }
+
+  .btn-shine::before {
+    content: '';
+    @apply absolute inset-0 -translate-x-full;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%);
+  }
+
+  .btn-shine:hover::before {
+    animation: shine 0.8s ease-out;
+  }
+
+  /* Bloom glow effect */
+  .bloom {
+    box-shadow: 0 0 80px -20px rgba(46, 155, 184, 0.3),
+                0 0 120px -40px rgba(26, 182, 154, 0.2);
+  }
+
+  .bloom-lg {
+    box-shadow: 0 0 120px -30px rgba(46, 155, 184, 0.4),
+                0 0 180px -60px rgba(26, 182, 154, 0.3);
+  }
 }
 
 @layer utilities {
   /* Text balance for headings */
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Perspective for 3D effects */
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .perspective-2000 {
+    perspective: 2000px;
+  }
+
+  /* Preserve 3D for nested transforms */
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  /* Will-change optimizations */
+  .will-change-transform {
+    will-change: transform;
+  }
+
+  .will-change-opacity {
+    will-change: opacity;
+  }
+
+  /* Rounded inherit for nested elements */
+  .rounded-inherit {
+    border-radius: inherit;
+  }
+
+  /* Backdrop saturate for enhanced glass effect */
+  .backdrop-saturate-150 {
+    backdrop-filter: saturate(150%);
+  }
+
+  .backdrop-saturate-180 {
+    backdrop-filter: saturate(180%);
   }
 
   /* Touch target size for accessibility */

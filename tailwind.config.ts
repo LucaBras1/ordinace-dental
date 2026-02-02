@@ -69,6 +69,12 @@ const config: Config = {
         body: ['var(--font-inter)', 'system-ui', 'sans-serif'],
       },
       fontSize: {
+        // Display sizes (Apple/Stripe level)
+        'display-2xl': ['5rem', { lineHeight: '1', letterSpacing: '-0.04em', fontWeight: '700' }],
+        'display-xl': ['4.5rem', { lineHeight: '1.05', letterSpacing: '-0.03em', fontWeight: '700' }],
+        'display-lg': ['4rem', { lineHeight: '1.1', letterSpacing: '-0.03em', fontWeight: '700' }],
+        'display': ['3.5rem', { lineHeight: '1.1', letterSpacing: '-0.02em', fontWeight: '600' }],
+        // Standard sizes
         'hero': ['3.75rem', { lineHeight: '1.1', letterSpacing: '-0.02em' }],
         'h1': ['3rem', { lineHeight: '1.2', letterSpacing: '-0.02em' }],
         'h2': ['2.25rem', { lineHeight: '1.25' }],
@@ -100,6 +106,13 @@ const config: Config = {
         'glow-primary': '0 0 40px -5px rgba(46, 155, 184, 0.4)',
         'glow-accent': '0 0 40px -5px rgba(26, 182, 154, 0.4)',
         'glow-primary-lg': '0 0 60px -10px rgba(46, 155, 184, 0.5)',
+        // Bloom shadows (premium effect)
+        'bloom': '0 0 80px -20px rgba(46, 155, 184, 0.3), 0 0 120px -40px rgba(26, 182, 154, 0.2)',
+        'bloom-lg': '0 0 120px -30px rgba(46, 155, 184, 0.4), 0 0 180px -60px rgba(26, 182, 154, 0.3)',
+        // Elevated shadows
+        'elevated-sm': '0 2px 8px -2px rgba(0, 0, 0, 0.1), 0 4px 12px -4px rgba(0, 0, 0, 0.05)',
+        'elevated': '0 4px 16px -4px rgba(0, 0, 0, 0.12), 0 8px 24px -8px rgba(0, 0, 0, 0.08)',
+        'elevated-lg': '0 8px 32px -8px rgba(0, 0, 0, 0.15), 0 16px 48px -16px rgba(0, 0, 0, 0.1)',
       },
       backgroundImage: {
         // Premium gradient mesh
@@ -111,6 +124,11 @@ const config: Config = {
         'gradient-primary': 'linear-gradient(135deg, #2E9BB8 0%, #2581A0 100%)',
         'gradient-accent': 'linear-gradient(135deg, #1AB69A 0%, #159580 100%)',
         'gradient-primary-hover': 'linear-gradient(135deg, #2581A0 0%, #1C6788 100%)',
+        // Animated gradients
+        'gradient-shine': 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%)',
+        'gradient-glow': 'radial-gradient(circle at center, rgba(46, 155, 184, 0.15) 0%, transparent 70%)',
+        // Text gradients
+        'text-gradient-shine': 'linear-gradient(135deg, #2E9BB8 0%, #1AB69A 50%, #2E9BB8 100%)',
       },
       backdropBlur: {
         'glass': '20px',
@@ -137,6 +155,15 @@ const config: Config = {
         'toast-in': 'toastIn 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
         'toast-out': 'toastOut 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
         'progress': 'progress linear forwards',
+        // Premium animations
+        'shine': 'shine 0.8s ease-out forwards',
+        'glow-pulse': 'glowPulse 2s ease-in-out infinite',
+        'gradient-x': 'gradientX 3s ease infinite',
+        'text-shimmer': 'textShimmer 2.5s ease-in-out infinite',
+        'float-slow': 'floatSlow 8s ease-in-out infinite',
+        'float-fast': 'floatFast 4s ease-in-out infinite',
+        'scale-up': 'scaleUp 0.3s ease-out',
+        'blur-in': 'blurIn 0.5s ease-out',
       },
       keyframes: {
         fadeIn: {
@@ -215,6 +242,39 @@ const config: Config = {
         progress: {
           '0%': { width: '100%' },
           '100%': { width: '0%' },
+        },
+        // Premium keyframes
+        shine: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
+        glowPulse: {
+          '0%, 100%': { boxShadow: '0 0 20px -5px rgba(46, 155, 184, 0.4)' },
+          '50%': { boxShadow: '0 0 40px -5px rgba(46, 155, 184, 0.6)' },
+        },
+        gradientX: {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+        },
+        textShimmer: {
+          '0%, 100%': { backgroundPosition: '0% 50%' },
+          '50%': { backgroundPosition: '100% 50%' },
+        },
+        floatSlow: {
+          '0%, 100%': { transform: 'translateY(0) rotate(0deg)' },
+          '50%': { transform: 'translateY(-20px) rotate(2deg)' },
+        },
+        floatFast: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
+        scaleUp: {
+          '0%': { transform: 'scale(0.95)', opacity: '0' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+        blurIn: {
+          '0%': { filter: 'blur(10px)', opacity: '0' },
+          '100%': { filter: 'blur(0)', opacity: '1' },
         },
       },
       transitionTimingFunction: {
