@@ -398,19 +398,55 @@ function parseComgateResponse(text: string): Record<string, string> {
 }
 
 /**
- * Verifikuje Comgate callback signature (pokud je implementováno).
+ * Verifikuje Comgate callback signature.
  *
- * Note: Comgate callback signature závisí na konkrétní konfiguraci merchant účtu.
- * Pokud Comgate odesílá signature, implementuj zde verifikaci.
+ * Comgate generuje signature jako HMAC-SHA256 z parametrů v abecedním pořadí
+ * spojených s '&' a podepsaných merchant secret.
+ *
+ * @param params - Parametry z callback requestu (bez 'signature')
+ * @param signature - Signature z callback requestu
+ * @returns true pokud je signature validní
  */
 export function verifyComgateSignature(
   params: Record<string, string>,
   signature: string
 ): boolean {
-  // TODO: Implementovat podle Comgate dokumentace merchant účtu
-  // Obecně: HMAC-SHA256 z seřazených parametrů + secret
-  console.warn('[Comgate] Signature verification not implemented')
-  return true // Pro testování akceptovat vše
+  try {
+    const config = getComgateConfig()
+
+    // Odstranit signature z parametrů pro výpočet
+    const paramsWithoutSig = { ...params }
+    delete paramsWithoutSig.signature
+
+    // Seřadit klíče abecedně
+    const sortedKeys = Object.keys(paramsWithoutSig).sort()
+
+    // Sestavit string pro podpis: key1=value1&key2=value2...
+    const signatureBase = sortedKeys
+      .map(key => `${key}=${paramsWithoutSig[key]}`)
+      .join('&')
+
+    // Vypočítat HMAC-SHA256
+    const expectedSignature = crypto
+      .createHmac('sha256', config.secret)
+      .update(signatureBase)
+      .digest('hex')
+
+    // Porovnat signatures (case-insensitive)
+    const isValid = expectedSignature.toLowerCase() === signature.toLowerCase()
+
+    if (!isValid) {
+      console.warn('[Comgate] Signature verification failed:', {
+        expected: expectedSignature,
+        received: signature,
+      })
+    }
+
+    return isValid
+  } catch (error) {
+    console.error('[Comgate] Signature verification error:', error)
+    return false
+  }
 }
 
 /**

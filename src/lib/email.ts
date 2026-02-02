@@ -62,6 +62,18 @@ function getFromAddress(): string {
   return process.env.EMAIL_FROM || 'Dentální ordinace <rezervace@ordinace.cz>'
 }
 
+/**
+ * Contact information for email templates.
+ * Configure via environment variables.
+ */
+function getContactInfo(): { phone: string; email: string; address: string } {
+  return {
+    phone: process.env.CONTACT_PHONE || '+420 123 456 789',
+    email: process.env.CONTACT_EMAIL || 'info@ordinace.cz',
+    address: process.env.CONTACT_ADDRESS || 'Adresa ordinace, Praha',
+  }
+}
+
 // ============================================
 // Email Sending Utilities
 // ============================================
@@ -147,6 +159,7 @@ function bookingConfirmationTemplate(booking: Booking, paymentUrl: string): stri
   const time = formatTime(booking.appointmentTime)
   const depositAmount = formatPrice(booking.depositAmount)
   const totalPrice = formatPrice(booking.service.price)
+  const contact = getContactInfo()
 
   return `
 <!DOCTYPE html>
@@ -292,9 +305,9 @@ function bookingConfirmationTemplate(booking: Booking, paymentUrl: string): stri
     <div class="footer">
       <p><strong>Kontakt na ordinaci:</strong></p>
       <p>
-        📞 +420 XXX XXX XXX<br>
-        📧 info@ordinace.cz<br>
-        📍 Adresa ordinace, Praha
+        📞 ${contact.phone}<br>
+        📧 ${contact.email}<br>
+        📍 ${contact.address}
       </p>
       <p style="color: #999; font-size: 12px; margin-top: 20px;">
         Tento email byl odeslán automaticky. Pokud jste rezervaci nevytvářeli, kontaktujte nás.
@@ -316,6 +329,7 @@ function paymentConfirmationTemplate(booking: Booking): string {
   const depositAmount = formatPrice(booking.depositAmount)
   const totalPrice = formatPrice(booking.service.price)
   const remainingAmount = formatPrice(booking.service.price - booking.depositAmount)
+  const contact = getContactInfo()
 
   return `
 <!DOCTYPE html>
@@ -463,9 +477,9 @@ function paymentConfirmationTemplate(booking: Booking): string {
     <div class="footer">
       <p><strong>Kontakt na ordinaci:</strong></p>
       <p>
-        📞 +420 XXX XXX XXX<br>
-        📧 info@ordinace.cz<br>
-        📍 Adresa ordinace, Praha
+        📞 ${contact.phone}<br>
+        📧 ${contact.email}<br>
+        📍 ${contact.address}
       </p>
       <p style="color: #999; font-size: 12px; margin-top: 20px;">
         ID rezervace: ${booking.id}
@@ -485,6 +499,7 @@ function reminderTemplate(booking: Booking): string {
   const date = formatDate(booking.appointmentDate)
   const time = formatTime(booking.appointmentTime)
   const remainingAmount = formatPrice(booking.service.price - booking.depositAmount)
+  const contact = getContactInfo()
 
   return `
 <!DOCTYPE html>
@@ -611,9 +626,9 @@ function reminderTemplate(booking: Booking): string {
     <div class="footer">
       <p><strong>Kontakt na ordinaci:</strong></p>
       <p>
-        📞 +420 XXX XXX XXX<br>
-        📧 info@ordinace.cz<br>
-        📍 Adresa ordinace, Praha
+        📞 ${contact.phone}<br>
+        📧 ${contact.email}<br>
+        📍 ${contact.address}
       </p>
       <p style="color: #999; font-size: 12px; margin-top: 20px;">
         Těšíme se na Vás!
@@ -633,6 +648,7 @@ function cancellationTemplate(booking: Booking, refundAmount?: number): string {
   const date = formatDate(booking.appointmentDate)
   const time = formatTime(booking.appointmentTime)
   const depositAmount = formatPrice(booking.depositAmount)
+  const contact = getContactInfo()
 
   const refundInfo = refundAmount !== undefined
     ? `<p>Kauce ve výši <strong>${formatPrice(refundAmount)}</strong> bude vrácena na Váš účet do 5 pracovních dnů.</p>`
@@ -751,9 +767,9 @@ function cancellationTemplate(booking: Booking, refundAmount?: number): string {
     <div class="footer">
       <p><strong>Kontakt na ordinaci:</strong></p>
       <p>
-        📞 +420 XXX XXX XXX<br>
-        📧 info@ordinace.cz<br>
-        📍 Adresa ordinace, Praha
+        📞 ${contact.phone}<br>
+        📧 ${contact.email}<br>
+        📍 ${contact.address}
       </p>
       <p style="color: #999; font-size: 12px; margin-top: 20px;">
         Děkujeme za pochopení.

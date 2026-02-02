@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "calendar:test": "tsx scripts/calendar-test.ts"
   },
   "dependencies": {
@@ -24,15 +26,20 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^20.11.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^5.1.3",
     "autoprefixer": "^10.4.17",
     "eslint": "^8.56.0",
     "eslint-config-next": "^14.2.0",
+    "jsdom": "^28.0.0",
     "postcss": "^8.4.33",
     "tailwindcss": "^3.4.1",
     "tsx": "^4.21.0",
-    "typescript": "^5.3.0"
+    "typescript": "^5.3.0",
+    "vitest": "^4.0.18"
   }
 }
