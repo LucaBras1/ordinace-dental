@@ -99,12 +99,18 @@ Event Color = Status:
 | `/api/bookings` | POST | Vytvoření rezervace (→ Google Calendar event) |
 | `/api/bookings/[id]` | GET | Detail rezervace z kalendáře |
 | `/api/bookings/[id]` | PATCH | Aktualizace stavu rezervace |
+| `/api/bookings/[id]/cancel` | POST | Zrušení rezervace s emailem |
 
 ### Platby
 | Endpoint | Metoda | Popis |
 |----------|--------|-------|
 | `/api/payments/create` | POST | Vytvoření Comgate platby |
 | `/api/webhooks/comgate` | POST | Webhook pro platební notifikace |
+
+### Cron Jobs
+| Endpoint | Metoda | Popis |
+|----------|--------|-------|
+| `/api/cron/send-reminders` | GET | Odeslání připomínek (24h před termínem) |
 
 ## Instalace
 
@@ -252,7 +258,34 @@ npm run dev         # Spuštění dev serveru
 npm run build       # Produkční build
 npm run start       # Spuštění produkce
 npm run lint        # ESLint kontrola
+npm run test        # Vitest unit testy
+npm run test:watch  # Vitest watch mode
+npm run cypress     # Cypress GUI
+npm run cypress:run # Cypress headless
 ```
+
+## Testování
+
+### Unit Testy (Vitest)
+```bash
+npm run test
+```
+
+Testy pokrývají:
+- BookingForm komponenta (20 testů)
+- Service selection, navigation, error handling
+- Progress bar, accessibility, price formatting
+
+### E2E Testy (Cypress)
+```bash
+npm run cypress
+```
+
+E2E testy pokrývají celý booking flow:
+- Výběr služby → Výběr termínu → Kontaktní údaje → Platba
+- Validace formulářů
+- Responsive design (mobile, tablet, desktop)
+- Error handling
 
 ## Email Notifikace
 

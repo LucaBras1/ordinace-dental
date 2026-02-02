@@ -1,5 +1,7 @@
 /**
  * Test: Cancellation Email (with refund)
+ *
+ * Development-only endpoint.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -12,6 +14,11 @@ export const dynamic = 'force-dynamic'
  * Test cancellation with full refund (>24h before appointment)
  */
 export async function GET() {
+  // Production guard
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
   const result = await sendCancellation(
     {
       id: 'test-booking-123',
@@ -45,6 +52,11 @@ export async function GET() {
  * Body: { refund?: number } // refund amount in haléře, undefined = no refund
  */
 export async function POST(request: NextRequest) {
+  // Production guard
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
   const body = await request.json()
   const refundAmount = body.refund !== undefined ? body.refund : undefined
 

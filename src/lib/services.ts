@@ -121,6 +121,17 @@ export function getServiceBySlug(slug: string): Service | undefined {
 }
 
 /**
+ * Get service by name (case-insensitive).
+ *
+ * @param name - Service name
+ * @returns Service or undefined if not found
+ */
+export function getServiceByName(name: string): Service | undefined {
+  const normalizedName = name.toLowerCase().trim()
+  return SERVICES.find(service => service.name.toLowerCase() === normalizedName)
+}
+
+/**
  * Get services as a lookup map (for quick access by ID).
  */
 export function getServicesMap(): Map<string, Service> {

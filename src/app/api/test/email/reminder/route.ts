@@ -1,5 +1,7 @@
 /**
  * Test: Reminder Email
+ *
+ * Development-only endpoint.
  */
 
 import { NextResponse } from 'next/server'
@@ -8,6 +10,11 @@ import { sendReminder } from '@/lib/email'
 export const dynamic = 'force-dynamic'
 
 export async function GET() {
+  // Production guard
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
   // Set appointment for tomorrow
   const tomorrow = new Date()
   tomorrow.setDate(tomorrow.getDate() + 1)

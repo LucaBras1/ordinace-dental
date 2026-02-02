@@ -17,6 +17,19 @@ import {
 export const dynamic = 'force-dynamic'
 
 /**
+ * Production guard - returns 404 in production.
+ */
+function productionGuard(): NextResponse | null {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json(
+      { error: 'Not found' },
+      { status: 404 }
+    )
+  }
+  return null
+}
+
+/**
  * Test booking data
  */
 const testBooking = {
@@ -40,6 +53,9 @@ const testBooking = {
  * Returns list of available test endpoints.
  */
 export async function GET() {
+  const guardResponse = productionGuard()
+  if (guardResponse) return guardResponse
+
   return NextResponse.json({
     message: 'Email testing endpoint',
     availableTests: [
@@ -69,6 +85,9 @@ export async function GET() {
  * }
  */
 export async function POST(request: NextRequest) {
+  const guardResponse = productionGuard()
+  if (guardResponse) return guardResponse
+
   try {
     const body = await request.json()
     const { type, email, customerName, appointmentDate, appointmentTime } = body
