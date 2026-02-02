@@ -48,10 +48,10 @@ describe('BookingForm', () => {
     mockFetch.mockReset()
     global.fetch = mockFetch
 
-    // Default mock: always return services
+    // Default mock: always return services (API returns { services: [...] })
     mockFetch.mockResolvedValue({
       ok: true,
-      json: async () => mockServices,
+      json: async () => ({ services: mockServices }),
     })
   })
 
@@ -358,10 +358,10 @@ describe('BookingForm - Integration', () => {
   })
 
   it('should complete full booking flow', async () => {
-    // Mock services
+    // Mock services (API returns { services: [...] })
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      json: async () => mockServices,
+      json: async () => ({ services: mockServices }),
     })
 
     render(<BookingForm />)

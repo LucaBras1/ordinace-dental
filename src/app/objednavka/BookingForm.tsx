@@ -74,7 +74,7 @@ export function BookingForm() {
         }
 
         const data = await response.json()
-        setServices(data)
+        setServices(data.services)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Chyba při načítání služeb')
       } finally {
