@@ -1,14 +1,17 @@
 /**
- * Email Integration with Resend
+ * Email Integration with Nodemailer
  *
  * Sends transactional emails for booking system:
  * - Booking confirmation with payment link
  * - Payment confirmation
  * - Appointment reminder (24h before)
  * - Cancellation notification
+ *
+ * Uses local Postfix SMTP on VPS for sending emails.
  */
 
-import { Resend } from 'resend'
+import nodemailer from 'nodemailer'
+import type { Transporter } from 'nodemailer'
 
 // ============================================
 // Types
@@ -36,23 +39,40 @@ type EmailOptions = {
 }
 
 // ============================================
-// Resend Client
+// Nodemailer Transporter
 // ============================================
 
-let _resend: Resend | null = null
+let _transporter: Transporter | null = null
 
 /**
- * Get or create Resend client (lazy loading).
+ * Get or create Nodemailer transporter (lazy loading).
+ * Supports both local Postfix (no auth) and external SMTP (with auth).
  */
-function getResendClient(): Resend {
-  if (!_resend) {
-    const apiKey = process.env.RESEND_API_KEY
-    if (!apiKey) {
-      throw new Error('RESEND_API_KEY environment variable is not set')
-    }
-    _resend = new Resend(apiKey)
+function getTransporter(): Transporter {
+  if (!_transporter) {
+    const host = process.env.SMTP_HOST || 'localhost'
+    const port = parseInt(process.env.SMTP_PORT || '25', 10)
+
+    _transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure: port === 465, // true for 465, false for other ports
+      // Only add auth if credentials are provided (not needed for localhost Postfix)
+      ...(process.env.SMTP_USER && process.env.SMTP_PASS && {
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+      }),
+      tls: {
+        // Allow self-signed certificates (common on local servers)
+        rejectUnauthorized: false,
+      },
+    })
+
+    console.log(`[Email] Transporter configured: ${host}:${port}`)
   }
-  return _resend
+  return _transporter
 }
 
 /**
@@ -79,31 +99,26 @@ function getContactInfo(): { phone: string; email: string; address: string } {
 // ============================================
 
 /**
- * Send email using Resend.
+ * Send email using Nodemailer.
  */
 async function sendEmail({ to, subject, html }: EmailOptions): Promise<{ success: boolean; error?: string }> {
   try {
-    const resend = getResendClient()
+    const transporter = getTransporter()
     const from = getFromAddress()
 
     console.log(`[Email] Sending "${subject}" to ${to}`)
 
-    const { data, error } = await resend.emails.send({
+    const info = await transporter.sendMail({
       from,
       to,
       subject,
       html,
     })
 
-    if (error) {
-      console.error('[Email] Resend API error:', error)
-      return { success: false, error: error.message }
-    }
-
-    console.log('[Email] Successfully sent email:', data?.id)
+    console.log('[Email] Successfully sent:', info.messageId)
     return { success: true }
   } catch (error) {
-    console.error('[Email] Failed to send email:', error)
+    console.error('[Email] Failed to send:', error)
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

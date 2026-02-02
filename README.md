@@ -33,7 +33,7 @@ Event Color = Status:
 - **Scroll animace** - plynulé fade-in animace při scrollování s respektem k `prefers-reduced-motion`
 - **Plně funkční mobile menu** - backdrop overlay, scroll lock, klávesová navigace (Escape)
 - **Comgate platební integrace** - online platby kauce s automatickým potvrzením rezervace
-- **Email notifikace** - Resend integrace pro potvrzovací emaily a připomínky
+- **Email notifikace** - Nodemailer/SMTP integrace pro potvrzovací emaily a připomínky
 - **Google Calendar integrace** - rezervace jako události, real-time dostupnost
 
 ## Struktura stránek
@@ -79,7 +79,7 @@ Event Color = Status:
 - **Fonty:** Inter (body), Playfair Display (headings)
 - **Kalendář:** [Google Calendar API](https://developers.google.com/calendar) - single source of truth
 - **Platby:** [Comgate](https://www.comgate.cz/) Payment Gateway
-- **Email:** [Resend](https://resend.com/) Transactional Email Service
+- **Email:** [Nodemailer](https://nodemailer.com/) s lokálním SMTP (Postfix)
 
 ## API Endpoints
 
@@ -143,9 +143,14 @@ COMGATE_MERCHANT_ID="your_merchant_id"
 COMGATE_SECRET="your_secret_key"
 COMGATE_TEST_MODE="true"  # false v produkci
 
-# Resend Email
-RESEND_API_KEY="re_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-EMAIL_FROM="Dentální ordinace <rezervace@ordinace.cz>"
+# SMTP Email (Nodemailer)
+# Pro lokální Postfix na VPS:
+SMTP_HOST="localhost"
+SMTP_PORT="25"
+# Pro externí SMTP (volitelné):
+# SMTP_USER="user"
+# SMTP_PASS="password"
+EMAIL_FROM="Dentální ordinace <rezervace@dvi12.vas-server.cz>"
 
 # App
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
@@ -190,7 +195,7 @@ src/
 │   ├── google-calendar.ts # Google Calendar API integrace
 │   ├── services.ts        # Hardcoded služby
 │   ├── comgate.ts         # Comgate platební integrace
-│   ├── email.ts           # Resend email integrace
+│   ├── email.ts           # Nodemailer email integrace
 │   └── utils.ts           # Utility funkce
 └── types/                 # TypeScript typy
 ```
