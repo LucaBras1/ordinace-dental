@@ -6,6 +6,22 @@
 
 ---
 
+## 🐛 Bug Fixes
+
+### 2026-02-02: Fix "services.find is not a function"
+
+**Problém:** Runtime error `TypeError: services.find is not a function` při načítání BookingForm.
+
+**Příčina:** API endpoint `/api/services` vrací objekt `{ services: [...] }`, ale kód nastavoval celý objekt do state místo pole služeb.
+
+**Oprava:**
+- `src/app/objednavka/BookingForm.tsx` (line 77): Změněno `setServices(data)` na `setServices(data.services)`
+- `src/app/objednavka/BookingForm.test.tsx`: Aktualizovány mocky aby vracely `{ services: mockServices }` místo `mockServices`
+
+**Commit:** `d132306` - fix: extract services array from API response in BookingForm
+
+---
+
 ## 📝 Změny v kódu
 
 ### Modifikované soubory

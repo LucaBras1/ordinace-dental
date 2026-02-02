@@ -2,6 +2,11 @@
 
 ## ✅ Dokončeno
 
+### Bug Fixes (2026-02-02)
+- ✅ Opraven bug "services.find is not a function" v BookingForm
+  - API vrací `{ services: [...] }` ale kód očekával pole
+  - Opraveno v `BookingForm.tsx` a testech
+
 ### Email Integration
 - ✅ Vytvořen `src/lib/email.ts` s Nodemailer integrací
 - ✅ Implementovány všechny email šablony:
