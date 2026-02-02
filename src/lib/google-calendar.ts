@@ -51,6 +51,8 @@ export interface BookingData {
   notes?: string
   isFirstVisit: boolean
   status: string
+  depositAmount?: number // in haléře
+  serviceId?: string
 }
 
 // ============================================
@@ -238,11 +240,15 @@ export async function createCalendarEvent(booking: BookingData): Promise<string>
     // Build event summary
     const summary = `${booking.serviceName} - ${booking.customerName}`
 
-    // Build event description
+    // Build event description with structured data for parsing
     const description = [
+      `Jméno: ${booking.customerName}`,
       `Kontakt: ${booking.customerPhone}`,
       `Email: ${booking.customerEmail}`,
       `První návštěva: ${booking.isFirstVisit ? 'Ano' : 'Ne'}`,
+      `Status: ${booking.status}`,
+      booking.depositAmount ? `Kauce: ${booking.depositAmount}` : '',
+      booking.serviceId ? `ServiceID: ${booking.serviceId}` : '',
       booking.notes ? `Poznámka: ${booking.notes}` : '',
     ]
       .filter(Boolean)
@@ -409,6 +415,42 @@ export async function listEvents(
   } catch (error) {
     console.error('[Google Calendar] Error listing events:', error)
     throw new Error(`Failed to list Google Calendar events: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  }
+}
+
+/**
+ * Gets a single Google Calendar event by ID.
+ *
+ * @param eventId - Google Calendar event ID
+ * @returns Calendar event details
+ * @throws {Error} If event not found or API call fails
+ */
+export async function getCalendarEvent(eventId: string): Promise<CalendarEvent> {
+  try {
+    const calendar = getCalendarClient()
+    const calendarId = getCalendarId()
+
+    console.log('[Google Calendar] Getting event:', eventId)
+
+    const response = await calendar.events.get({
+      calendarId,
+      eventId,
+    })
+
+    const event = response.data
+
+    return {
+      id: event.id || '',
+      summary: event.summary || '',
+      description: event.description ?? undefined,
+      start: event.start?.dateTime || event.start?.date || '',
+      end: event.end?.dateTime || event.end?.date || '',
+      colorId: event.colorId ?? undefined,
+    }
+
+  } catch (error) {
+    console.error('[Google Calendar] Error getting event:', error)
+    throw new Error(`Failed to get Google Calendar event: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
 

@@ -2,18 +2,19 @@
  * Availability API Route
  *
  * GET /api/availability?date=YYYY-MM-DD - Get available time slots for a specific date
+ *
+ * Reads occupied slots directly from Google Calendar (single source of truth).
  */
 
 import { NextRequest, NextResponse } from 'next/server'
+import { getAvailableSlots, isCalendarEnabled } from '@/lib/google-calendar'
+import { availabilityQuerySchema, formatZodError } from '@/lib/validations'
 
 // Force dynamic rendering since we use searchParams
 export const dynamic = 'force-dynamic'
-import { prisma } from '@/lib/prisma'
-import { availabilityQuerySchema, formatZodError } from '@/lib/validations'
 
 /**
  * Business hours configuration
- * TODO: Move to environment variables or database configuration
  */
 const BUSINESS_HOURS = {
   start: '08:00',
@@ -26,9 +27,10 @@ const BUSINESS_HOURS = {
 }
 
 /**
- * Generate time slots for a given date
+ * Generate all possible time slots for a given date.
+ * This is used as fallback when Google Calendar is not configured.
  */
-function generateTimeSlots(date: string): string[] {
+function generateTimeSlots(): string[] {
   const slots: string[] = []
   const [startHour, startMin] = BUSINESS_HOURS.start.split(':').map(Number)
   const [endHour, endMin] = BUSINESS_HOURS.end.split(':').map(Number)
@@ -62,7 +64,7 @@ function generateTimeSlots(date: string): string[] {
  * GET /api/availability
  *
  * Returns available time slots for a specific date.
- * Slots are marked as unavailable if they have existing bookings.
+ * Reads occupied slots from Google Calendar.
  *
  * @query {string} date - Date in YYYY-MM-DD format
  *
@@ -110,42 +112,64 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Generate all possible time slots
-    const allSlots = generateTimeSlots(date)
+    // Check if date is in the past
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const requestedDate = new Date(date)
+    requestedDate.setHours(0, 0, 0, 0)
 
-    // Fetch existing bookings for this date
-    const existingBookings = await prisma.booking.findMany({
-      where: {
-        appointmentDate: new Date(date),
-        status: {
-          in: ['PENDING_PAYMENT', 'PAID'],
+    if (requestedDate < today) {
+      return NextResponse.json(
+        {
+          date,
+          slots: [],
+          message: 'Cannot book appointments in the past',
         },
-      },
-      select: {
-        appointmentTime: true,
-      },
-    })
+        { status: 200 }
+      )
+    }
 
-    // Create a set of booked times for efficient lookup
-    const bookedTimes = new Set(existingBookings.map((b) => b.appointmentTime))
+    // Get slots from Google Calendar
+    if (isCalendarEnabled()) {
+      const calendarSlots = await getAvailableSlots(dateObj)
 
-    // Map slots with availability
-    const slots = allSlots.map((time) => ({
+      // Transform to API response format
+      const slots = calendarSlots.map(slot => ({
+        time: slot.start,
+        available: slot.available,
+      }))
+
+      return NextResponse.json(
+        {
+          date,
+          slots,
+        },
+        { status: 200 }
+      )
+    }
+
+    // Fallback: Google Calendar not configured - return all slots as available
+    console.warn('[API] Google Calendar not configured - returning all slots as available')
+    const allSlots = generateTimeSlots()
+    const slots = allSlots.map(time => ({
       time,
-      available: !bookedTimes.has(time),
+      available: true,
     }))
 
     return NextResponse.json(
       {
         date,
         slots,
+        fallbackMode: true,
+        warning: 'Google Calendar not configured - availability may not be accurate',
       },
       { status: 200 }
     )
-  } catch (error) {
-    console.error('[API] Error fetching availability, using fallback:', error)
 
-    // Fallback: return all slots as available when database is not available
+  } catch (error) {
+    console.error('[API] Error fetching availability:', error)
+
+    // Fallback: return all slots as available when error occurs
     const searchParams = request.nextUrl.searchParams
     const dateParam = searchParams.get('date')
 
@@ -165,9 +189,9 @@ export async function GET(request: NextRequest) {
         )
       }
 
-      // Return all slots as available (no database to check bookings)
-      const allSlots = generateTimeSlots(dateParam)
-      const slots = allSlots.map((time) => ({
+      // Return all slots as available
+      const allSlots = generateTimeSlots()
+      const slots = allSlots.map(time => ({
         time,
         available: true,
       }))
@@ -177,6 +201,7 @@ export async function GET(request: NextRequest) {
           date: dateParam,
           slots,
           fallbackMode: true,
+          error: 'Could not verify calendar availability',
         },
         { status: 200 }
       )

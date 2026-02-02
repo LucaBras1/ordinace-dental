@@ -2,6 +2,27 @@
 
 Moderní webové stránky pro ordinaci dentální hygieny vytvořené v Next.js 14 s TypeScriptem a Tailwind CSS.
 
+## Architektura
+
+**Google Calendar = Single Source of Truth**
+
+Projekt používá Google Calendar jako jediný zdroj pravdy pro rezervace. Žádná databáze není potřeba.
+
+```
+Rezervace (Booking) = Google Calendar Event
+    ↓
+Booking ID = Event ID
+    ↓
+Event Description obsahuje strukturovaná data:
+  - Jméno, Email, Telefon zákazníka
+  - Status platby, Kauce, Service ID
+    ↓
+Event Color = Status:
+  - Orange = PENDING_PAYMENT
+  - Green = PAID
+  - Red = CANCELLED
+```
+
 ## Funkce
 
 - **15 plně responzivních stránek** - od homepage po právní dokumenty
@@ -13,7 +34,7 @@ Moderní webové stránky pro ordinaci dentální hygieny vytvořené v Next.js 
 - **Plně funkční mobile menu** - backdrop overlay, scroll lock, klávesová navigace (Escape)
 - **Comgate platební integrace** - online platby kauce s automatickým potvrzením rezervace
 - **Email notifikace** - Resend integrace pro potvrzovací emaily a připomínky
-- **Database-backed rezervace** - Prisma 7 + PostgreSQL pro správu objednávek
+- **Google Calendar integrace** - rezervace jako události, real-time dostupnost
 
 ## Struktura stránek
 
@@ -56,13 +77,153 @@ Moderní webové stránky pro ordinaci dentální hygieny vytvořené v Next.js 
 - **Styling:** [Tailwind CSS](https://tailwindcss.com/)
 - **UI komponenty:** Vlastní komponenty s [Radix UI](https://www.radix-ui.com/)
 - **Fonty:** Inter (body), Playfair Display (headings)
-- **Database:** [Prisma 7](https://www.prisma.io/) + PostgreSQL
+- **Kalendář:** [Google Calendar API](https://developers.google.com/calendar) - single source of truth
 - **Platby:** [Comgate](https://www.comgate.cz/) Payment Gateway
 - **Email:** [Resend](https://resend.com/) Transactional Email Service
 
-## UI Komponenty
+## API Endpoints
 
-Projekt obsahuje vlastní knihovnu UI komponent:
+### Služby
+| Endpoint | Metoda | Popis |
+|----------|--------|-------|
+| `/api/services` | GET | Seznam služeb (hardcoded) |
+
+### Dostupnost
+| Endpoint | Metoda | Popis |
+|----------|--------|-------|
+| `/api/availability?date=YYYY-MM-DD` | GET | Volné sloty z Google Calendar |
+
+### Rezervace
+| Endpoint | Metoda | Popis |
+|----------|--------|-------|
+| `/api/bookings` | POST | Vytvoření rezervace (→ Google Calendar event) |
+| `/api/bookings/[id]` | GET | Detail rezervace z kalendáře |
+| `/api/bookings/[id]` | PATCH | Aktualizace stavu rezervace |
+
+### Platby
+| Endpoint | Metoda | Popis |
+|----------|--------|-------|
+| `/api/payments/create` | POST | Vytvoření Comgate platby |
+| `/api/webhooks/comgate` | POST | Webhook pro platební notifikace |
+
+## Instalace
+
+```bash
+# Klonování repozitáře
+git clone https://github.com/user/ordinace-dental.git
+cd ordinace-dental
+
+# Instalace závislostí
+npm install
+
+# Kopírovat .env.example do .env a vyplnit hodnoty
+cp .env.example .env
+
+# Spuštění development serveru
+npm run dev
+
+# Build pro produkci
+npm run build
+
+# Spuštění produkčního serveru
+npm start
+```
+
+### Environment Variables
+
+```bash
+# Google Calendar API (POVINNÉ)
+GOOGLE_CLIENT_ID="xxx.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="xxx"
+GOOGLE_REFRESH_TOKEN="xxx"
+GOOGLE_CALENDAR_ID="xxx@group.calendar.google.com"
+
+# Comgate Payments
+COMGATE_MERCHANT_ID="your_merchant_id"
+COMGATE_SECRET="your_secret_key"
+COMGATE_TEST_MODE="true"  # false v produkci
+
+# Resend Email
+RESEND_API_KEY="re_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+EMAIL_FROM="Dentální ordinace <rezervace@ordinace.cz>"
+
+# App
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+```
+
+### Google Calendar Setup
+
+1. Vytvořit projekt v [Google Cloud Console](https://console.cloud.google.com/)
+2. Aktivovat **Google Calendar API** (APIs & Services → Library)
+3. Vytvořit OAuth 2.0 credentials (APIs & Services → Credentials)
+4. Získat refresh token pomocí [OAuth Playground](https://developers.google.com/oauthplayground/)
+5. Vytvořit kalendář pro rezervace v Google Calendar
+6. Zkopírovat Calendar ID z nastavení kalendáře
+
+## Struktura projektu
+
+```
+src/
+├── app/                    # Next.js App Router stránky
+│   ├── api/               # API routes
+│   │   ├── availability/  # Dostupnost z Google Calendar
+│   │   ├── bookings/      # Vytvoření/čtení rezervací
+│   │   ├── payments/      # Platební API
+│   │   ├── services/      # Seznam služeb
+│   │   └── webhooks/      # Comgate callback
+│   ├── layout.tsx         # Root layout (Header + Footer)
+│   ├── globals.css        # Globální styly + animace
+│   ├── page.tsx           # Homepage
+│   ├── kontakt/           # Kontaktní stránka
+│   ├── sluzby/            # Služby + detaily
+│   ├── cenik/             # Ceník
+│   ├── o-nas/             # O nás
+│   ├── objednavka/        # Online rezervace
+│   └── ...                # Další stránky
+├── components/
+│   ├── layout/            # Header, Footer
+│   ├── sections/          # Hero, Services, About, etc.
+│   ├── booking/           # Rezervační komponenty
+│   └── ui/                # Reusable UI komponenty
+├── hooks/                 # Custom React hooks
+├── lib/
+│   ├── google-calendar.ts # Google Calendar API integrace
+│   ├── services.ts        # Hardcoded služby
+│   ├── comgate.ts         # Comgate platební integrace
+│   ├── email.ts           # Resend email integrace
+│   └── utils.ts           # Utility funkce
+└── types/                 # TypeScript typy
+```
+
+## Služby
+
+Služby jsou definovány v `src/lib/services.ts`:
+
+| Služba | Cena | Kauce | Trvání |
+|--------|------|-------|--------|
+| Dentální hygiena | 1 500 Kč | 400 Kč | 60 min |
+| Bělení zubů | 4 000 Kč | 800 Kč | 90 min |
+| Preventivní prohlídka | 800 Kč | 200 Kč | 30 min |
+| Léčba zubního kazu | 2 000 Kč | 500 Kč | 45 min |
+| Extrakce zubu | 1 500 Kč | 400 Kč | 30 min |
+
+## Booking Flow
+
+```
+1. Zákazník vybere službu a termín
+   ↓
+2. POST /api/bookings → vytvoří Google Calendar event (oranžový)
+   ↓
+3. Redirect na Comgate platební bránu
+   ↓
+4. Zákazník zaplatí kauci
+   ↓
+5. Comgate webhook → aktualizuje event (zelený = PAID)
+   ↓
+6. Email potvrzení zákazníkovi
+```
+
+## UI Komponenty
 
 | Komponenta | Popis |
 |------------|-------|
@@ -78,122 +239,6 @@ Projekt obsahuje vlastní knihovnu UI komponent:
 | `ContactInfo` | Kontaktní údaje s hodinami |
 | `Map` | Embed mapa |
 | `AnimatedSection` | Wrapper pro scroll-triggered animace |
-| `AnimatedItem` | Staggered animace pro položky v seznamech |
-
-## Custom Hooks
-
-| Hook | Popis |
-|------|-------|
-| `useScrollAnimation` | Intersection Observer hook pro scroll animace s podporou `prefers-reduced-motion` |
-
-## Instalace
-
-```bash
-# Klonování repozitáře
-git clone https://github.com/LucaBras1/ordinace-dental.git
-cd ordinace-dental
-
-# Instalace závislostí
-npm install
-
-# Kopírovat .env.example do .env a vyplnit hodnoty
-cp .env.example .env
-
-# Vygenerovat Prisma Client
-npx prisma generate
-
-# Spustit databázové migrace
-npx prisma migrate dev
-
-# Spuštění development serveru
-npm run dev
-
-# Build pro produkci
-npm run build
-
-# Spuštění produkčního serveru
-npm start
-```
-
-### Environment Variables
-
-Vyplň následující proměnné v `.env`:
-
-```bash
-# Database
-DATABASE_URL="postgresql://user:password@localhost:5432/ordinace_dental"
-
-# Comgate Payments
-COMGATE_MERCHANT_ID="your_merchant_id"
-COMGATE_SECRET="your_secret_key"
-COMGATE_TEST_MODE="true"  # false v produkci
-
-# Resend Email
-RESEND_API_KEY="re_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-EMAIL_FROM="Dentální ordinace <rezervace@ordinace.cz>"
-
-# App
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
-```
-
-**Dokumentace:**
-- Platby: [docs/COMGATE_INTEGRATION.md](./docs/COMGATE_INTEGRATION.md)
-- Email: [docs/EMAIL_INTEGRATION.md](./docs/EMAIL_INTEGRATION.md)
-
-## Struktura projektu
-
-```
-src/
-├── app/                    # Next.js App Router stránky
-│   ├── api/               # API routes
-│   │   ├── payments/      # Platební API
-│   │   │   └── create/    # Vytvoření platby
-│   │   └── webhooks/      # Webhooks
-│   │       └── comgate/   # Comgate callback
-│   ├── layout.tsx         # Root layout (Header + Footer)
-│   ├── globals.css        # Globální styly + animace
-│   ├── page.tsx           # Homepage
-│   ├── kontakt/           # Kontaktní stránka
-│   ├── sluzby/            # Služby + detaily
-│   ├── cenik/             # Ceník
-│   ├── o-nas/             # O nás
-│   ├── objednavka/        # Online rezervace
-│   ├── technologie/       # Vybavení ordinace
-│   ├── faq/               # FAQ
-│   ├── recenze/           # Recenze
-│   ├── pojistovny/        # Pojišťovny
-│   ├── ochrana-osobnich-udaju/  # GDPR
-│   └── pristupnost/       # Přístupnost
-├── components/
-│   ├── layout/            # Header, Footer
-│   ├── sections/          # Hero, Services, About, etc.
-│   └── ui/                # Reusable UI komponenty
-├── generated/
-│   └── prisma/            # Generovaný Prisma Client
-├── hooks/
-│   └── useScrollAnimation.ts  # Intersection Observer hook
-├── lib/
-│   ├── comgate.ts         # Comgate platební integrace
-│   ├── email.ts           # Resend email integrace
-│   ├── prisma.ts          # Prisma 7 client s pg adapter
-│   └── utils.ts           # Utility funkce (cn)
-├── prisma/
-│   └── schema.prisma      # Databázové schema
-├── docs/
-│   ├── COMGATE_INTEGRATION.md  # Platební brána
-│   └── EMAIL_INTEGRATION.md    # Email systém
-└── public/
-    ├── images/            # Obrázky
-    └── logo.svg           # Logo
-```
-
-## Barevná paleta
-
-| Barva | Hodnota | Použití |
-|-------|---------|---------|
-| Primary | `#2E9BB8` | Hlavní akcentová barva (lékařská modrá) |
-| Accent | `#1AB69A` | Sekundární akcent (čistá máta) |
-| Gray | Tailwind grays | Texty, pozadí |
 
 ## Scripts
 
@@ -202,82 +247,24 @@ npm run dev         # Spuštění dev serveru
 npm run build       # Produkční build
 npm run start       # Spuštění produkce
 npm run lint        # ESLint kontrola
-
-# Database skripty
-npm run db:generate # Vygenerovat Prisma Client
-npm run db:migrate  # Vytvořit a aplikovat migraci
-npm run db:seed     # Seed databáze (vytvoří služby)
-npm run db:studio   # Otevřít Prisma Studio (GUI)
 ```
 
-## Database Schema
+## Email Notifikace
 
-**Dokumentace:** [docs/database-schema.md](docs/database-schema.md)
+| Email | Kdy se odesílá |
+|-------|----------------|
+| Booking Confirmation | Po vytvoření rezervace (s platebním linkem) |
+| Payment Confirmation | Po úspěšné platbě kauce |
+| Reminder | 24h před termínem |
+| Cancellation | Při zrušení rezervace |
 
-### Services (služby)
-- Dentální hygiena, Bělení zubů, Air-Flow čištění, Parodontologie, Konzultace
-- Ceny a kauční částky v haléřích (INT)
-- Duration v minutách pro slot alokaci
+## Barevná paleta
 
-### Bookings (rezervace)
-- Customer info (jméno, email, telefon)
-- Appointment datetime (DATE + TIME string)
-- Status: PENDING_PAYMENT → PAID → COMPLETED
-- Payment ID (Comgate integration)
-- Google Calendar Event ID (sync)
-- GDPR consent tracking
-
-**Migration Guide:** [docs/database-migration-guide.md](docs/database-migration-guide.md)
-
-## Email Integration
-
-Projekt obsahuje kompletní email systém pro notifikace zákazníků:
-
-### Email typy
-
-| Email | Kdy se odesílá | Obsahuje |
-|-------|----------------|----------|
-| **Booking Confirmation** | Po vytvoření rezervace | Platební link, detail rezervace, storno podmínky |
-| **Payment Confirmation** | Po úspěšné platbě kauce | Potvrzení rezervace, co přinést, detail návštěvy |
-| **Reminder** | 24h před termínem | Připomínka návštěvy, co přinést |
-| **Cancellation** | Při zrušení rezervace | Info o zrušení, vrácení kauce (pokud nárok) |
-
-### Použití
-
-```typescript
-import { sendPaymentConfirmation } from '@/lib/email'
-
-// Po úspěšné platbě
-await sendPaymentConfirmation({
-  id: booking.id,
-  customerName: booking.customerName,
-  customerEmail: booking.customerEmail,
-  appointmentDate: booking.appointmentDate,
-  appointmentTime: booking.appointmentTime,
-  depositAmount: booking.depositAmount,
-  status: booking.status,
-  service: {
-    name: service.name,
-    price: service.price,
-    duration: service.duration,
-  },
-})
-```
-
-### Testování
-
-```bash
-# Quick test (otevřít v prohlížeči)
-http://localhost:3000/api/test/email/payment-confirmation
-
-# Nebo pomocí curl
-curl http://localhost:3000/api/test/email/payment-confirmation
-```
-
-**Dokumentace:**
-- [EMAIL_INTEGRATION.md](./docs/EMAIL_INTEGRATION.md) - Kompletní dokumentace
-- [EMAIL_TESTING.md](./docs/EMAIL_TESTING.md) - Testing guide
-- [EMAIL_QUICK_REFERENCE.md](./docs/EMAIL_QUICK_REFERENCE.md) - Quick reference
+| Barva | Hodnota | Použití |
+|-------|---------|---------|
+| Primary | `#2E9BB8` | Hlavní akcentová barva (lékařská modrá) |
+| Accent | `#1AB69A` | Sekundární akcent (čistá máta) |
+| Gray | Tailwind grays | Texty, pozadí |
 
 ## Deployment
 

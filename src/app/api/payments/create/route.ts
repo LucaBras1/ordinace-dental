@@ -3,11 +3,11 @@
  *
  * POST /api/payments/create
  *
- * Vytvoří Comgate platbu pro existující booking a vrátí redirect URL.
+ * Vytvoří Comgate platbu pro existující booking (Google Calendar event) a vrátí redirect URL.
  *
  * Request Body:
  * {
- *   bookingId: string
+ *   bookingId: string (Google Calendar Event ID)
  * }
  *
  * Response:
@@ -16,27 +16,76 @@
  *   paymentUrl: string,
  *   transId: string
  * }
- *
- * Usage:
- * ```typescript
- * const response = await fetch('/api/payments/create', {
- *   method: 'POST',
- *   headers: { 'Content-Type': 'application/json' },
- *   body: JSON.stringify({ bookingId: 'booking_123' })
- * })
- * const data = await response.json()
- * if (data.success) {
- *   window.location.href = data.paymentUrl
- * }
- * ```
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { createPayment } from '@/lib/comgate'
+import { getCalendarEvent, isCalendarEnabled } from '@/lib/google-calendar'
+import { getServiceById } from '@/lib/services'
 
 // ============================================
-// TYPES
+// Helper Functions
+// ============================================
+
+/**
+ * Parse booking data from Google Calendar event description.
+ */
+function parseEventDescription(description: string): {
+  phone?: string
+  email?: string
+  name?: string
+  depositAmount?: number
+} {
+  const lines = description.split('\n')
+  const result: Record<string, string> = {}
+
+  for (const line of lines) {
+    const [key, ...valueParts] = line.split(':')
+    if (key && valueParts.length > 0) {
+      result[key.trim().toLowerCase()] = valueParts.join(':').trim()
+    }
+  }
+
+  return {
+    phone: result['kontakt'],
+    email: result['email'],
+    name: result['jméno'] || result['name'],
+    depositAmount: result['kauce'] ? parseInt(result['kauce'], 10) : undefined,
+  }
+}
+
+/**
+ * Parse service ID from event summary.
+ */
+function parseServiceIdFromSummary(summary: string): string {
+  const serviceName = summary.split(' - ')[0]?.trim() || ''
+
+  const serviceMap: Record<string, string> = {
+    'Dentální hygiena': 'dentalni-hygiena',
+    'Bělení zubů': 'beleni-zubu',
+    'Preventivní prohlídka': 'preventivni-prohlidka',
+    'Léčba zubního kazu': 'lecba-zubniho-kazu',
+    'Extrakce zubu': 'extrakce-zubu',
+  }
+
+  return serviceMap[serviceName] || ''
+}
+
+/**
+ * Get status from calendar event color ID.
+ */
+function getStatusFromColorId(colorId?: string): string {
+  const colorMap: Record<string, string> = {
+    '10': 'PAID',
+    '6': 'PENDING_PAYMENT',
+    '8': 'NO_SHOW',
+    '11': 'CANCELLED',
+  }
+  return colorMap[colorId || ''] || 'PENDING_PAYMENT'
+}
+
+// ============================================
+// Types
 // ============================================
 
 interface CreatePaymentRequest {
@@ -62,13 +111,24 @@ export async function POST(request: NextRequest) {
 
     console.log('[Payment API] Creating payment for booking:', bookingId)
 
-    // 2. Find booking
-    const booking = await prisma.booking.findUnique({
-      where: { id: bookingId },
-      include: { service: true },
-    })
+    // 2. Check if Google Calendar is configured
+    if (!isCalendarEnabled()) {
+      console.warn('[Payment API] Google Calendar not configured - mock payment')
 
-    if (!booking) {
+      // Return mock payment URL for testing
+      return NextResponse.json({
+        success: true,
+        paymentUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/rezervace/potvrzeni?bookingId=${bookingId}&mock=true`,
+        transId: `mock-${Date.now()}`,
+        warning: 'Google Calendar not configured - mock payment',
+      })
+    }
+
+    // 3. Get booking from Google Calendar
+    let event
+    try {
+      event = await getCalendarEvent(bookingId)
+    } catch (error) {
       console.error('[Payment API] Booking not found:', bookingId)
       return NextResponse.json(
         { success: false, error: 'Booking not found' },
@@ -76,8 +136,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 3. Validate booking status
-    if (booking.status === 'PAID') {
+    // 4. Parse booking data from event
+    const bookingData = parseEventDescription(event.description || '')
+    const serviceId = parseServiceIdFromSummary(event.summary || '')
+    const service = getServiceById(serviceId)
+
+    if (!service) {
+      console.error('[Payment API] Service not found for booking:', bookingId)
+      return NextResponse.json(
+        { success: false, error: 'Service not found' },
+        { status: 404 }
+      )
+    }
+
+    // 5. Validate booking status
+    const status = getStatusFromColorId(event.colorId)
+
+    if (status === 'PAID') {
       console.log('[Payment API] Booking already paid:', bookingId)
       return NextResponse.json(
         { success: false, error: 'Booking already paid' },
@@ -85,32 +160,46 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (booking.status === 'CANCELLED' || booking.status === 'REFUNDED') {
-      console.log('[Payment API] Booking is cancelled/refunded:', bookingId)
+    if (status === 'CANCELLED') {
+      console.log('[Payment API] Booking is cancelled:', bookingId)
       return NextResponse.json(
-        { success: false, error: 'Booking is cancelled or refunded' },
+        { success: false, error: 'Booking is cancelled' },
         { status: 400 }
       )
     }
 
-    // 4. Create payment label
-    const label = `Kauce - ${booking.service.name}`
+    // 6. Get customer info
+    const customerEmail = bookingData.email || ''
+    const customerName = bookingData.name || event.summary.split(' - ')[1] || 'Zákazník'
+    const customerPhone = bookingData.phone || ''
+    const depositAmount = bookingData.depositAmount || service.depositAmount
+
+    if (!customerEmail) {
+      console.error('[Payment API] Missing customer email:', bookingId)
+      return NextResponse.json(
+        { success: false, error: 'Missing customer email' },
+        { status: 400 }
+      )
+    }
+
+    // 7. Create payment label
+    const label = `Kauce - ${service.name}`
 
     console.log('[Payment API] Creating Comgate payment:', {
       bookingId,
-      price: booking.depositAmount,
+      price: depositAmount,
       label,
-      email: booking.customerEmail,
+      email: customerEmail,
     })
 
-    // 5. Create payment via Comgate
+    // 8. Create payment via Comgate
     const result = await createPayment({
-      bookingId: booking.id,
-      price: booking.depositAmount,
+      bookingId: bookingId, // Event ID = Booking ID
+      price: depositAmount,
       label,
-      email: booking.customerEmail,
-      customerName: booking.customerName,
-      customerPhone: booking.customerPhone,
+      email: customerEmail,
+      customerName,
+      customerPhone,
     })
 
     if (!result.success) {
@@ -121,22 +210,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 6. Update booking with payment ID
-    await prisma.booking.update({
-      where: { id: bookingId },
-      data: {
-        paymentId: result.transId,
-        updatedAt: new Date(),
-      },
-    })
-
     console.log('[Payment API] Payment created successfully:', {
       bookingId,
       transId: result.transId,
       redirectUrl: result.redirectUrl,
     })
 
-    // 7. Return payment URL
+    // 9. Return payment URL
     return NextResponse.json({
       success: true,
       paymentUrl: result.redirectUrl,
@@ -163,28 +243,19 @@ export async function POST(request: NextRequest) {
 /**
  * GET endpoint pro dokumentaci/debugging.
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   return NextResponse.json({
     message: 'Payment creation endpoint',
     method: 'POST',
+    description: 'Creates a Comgate payment for an existing Google Calendar booking.',
     requiredBody: {
-      bookingId: 'string',
+      bookingId: 'string (Google Calendar Event ID)',
     },
     response: {
       success: 'boolean',
       paymentUrl: 'string (if success)',
       transId: 'string (if success)',
       error: 'string (if failed)',
-    },
-    example: {
-      request: {
-        bookingId: 'clxyz123abc',
-      },
-      response: {
-        success: true,
-        paymentUrl: 'https://payments.comgate.cz/client/instructions/index?id=...',
-        transId: 'ABC-123-456',
-      },
     },
   })
 }

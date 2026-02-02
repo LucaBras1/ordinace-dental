@@ -10,7 +10,6 @@
  * - NEXT_PUBLIC_APP_URL: Base URL aplikace pro redirect/callback
  */
 
-import { Booking } from '@/generated/prisma'
 import crypto from 'crypto'
 
 // ============================================

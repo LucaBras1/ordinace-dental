@@ -1,75 +1,41 @@
 /**
  * Bookings API Route
  *
- * POST /api/bookings - Create a new booking with PENDING_PAYMENT status
+ * POST /api/bookings - Create a new booking as Google Calendar event
+ *
+ * Google Calendar is the single source of truth for all bookings.
+ * Booking ID = Google Calendar Event ID.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { createBookingSchema, formatZodError } from '@/lib/validations'
+import { getServiceById } from '@/lib/services'
+import { createCalendarEvent, isCalendarEnabled } from '@/lib/google-calendar'
+import { sendBookingConfirmation } from '@/lib/email'
 
-// Force dynamic rendering for database operations
+// Force dynamic rendering for API operations
 export const dynamic = 'force-dynamic'
-
-/**
- * Fallback services for mock mode (must match services/route.ts)
- */
-const FALLBACK_SERVICES: Record<
-  string,
-  { id: string; name: string; depositAmount: number; price: number; duration: number; active: boolean }
-> = {
-  'dentalni-hygiena': {
-    id: 'dentalni-hygiena',
-    name: 'Dentální hygiena',
-    depositAmount: 40000,
-    price: 150000,
-    duration: 60,
-    active: true,
-  },
-  'beleni-zubu': {
-    id: 'beleni-zubu',
-    name: 'Bělení zubů',
-    depositAmount: 80000,
-    price: 400000,
-    duration: 90,
-    active: true,
-  },
-  'preventivni-prohlidka': {
-    id: 'preventivni-prohlidka',
-    name: 'Preventivní prohlídka',
-    depositAmount: 20000,
-    price: 80000,
-    duration: 30,
-    active: true,
-  },
-  'lecba-zubniho-kazu': {
-    id: 'lecba-zubniho-kazu',
-    name: 'Léčba zubního kazu',
-    depositAmount: 50000,
-    price: 200000,
-    duration: 45,
-    active: true,
-  },
-  'extrakce-zubu': {
-    id: 'extrakce-zubu',
-    name: 'Extrakce zubu',
-    depositAmount: 40000,
-    price: 150000,
-    duration: 30,
-    active: true,
-  },
-}
 
 /**
  * POST /api/bookings
  *
- * Creates a new booking with PENDING_PAYMENT status.
+ * Creates a new booking as a Google Calendar event with PENDING status.
  * Returns booking details and payment URL for Comgate.
  *
  * @body {CreateBookingInput} - Validated booking data
  *
  * @returns {
- *   booking: Booking
+ *   booking: {
+ *     id: string (Google Calendar Event ID)
+ *     serviceId: string
+ *     serviceName: string
+ *     customerName: string
+ *     customerEmail: string
+ *     appointmentDate: string
+ *     appointmentTime: string
+ *     depositAmount: number
+ *     status: string
+ *   }
  *   paymentUrl: string
  * }
  */
@@ -93,43 +59,17 @@ export async function POST(request: NextRequest) {
 
     const data = validationResult.data
 
-    // Try to get service from database first, fall back to hardcoded
-    let service: { id: string; name: string; depositAmount: number; price: number; duration: number; active: boolean } | null = null
-    let useFallback = false
-
-    try {
-      const dbService = await prisma.service.findUnique({
-        where: { id: data.serviceId },
-        select: {
-          id: true,
-          name: true,
-          depositAmount: true,
-          price: true,
-          duration: true,
-          active: true,
-        },
-      })
-      service = dbService
-    } catch {
-      // Database not available, use fallback
-      useFallback = true
-      service = FALLBACK_SERVICES[data.serviceId] || null
-    }
+    // Get service from hardcoded services
+    const service = getServiceById(data.serviceId)
 
     if (!service) {
-      // Check fallback services if not found in database
-      if (!useFallback && FALLBACK_SERVICES[data.serviceId]) {
-        service = FALLBACK_SERVICES[data.serviceId]
-        useFallback = true
-      } else {
-        return NextResponse.json(
-          {
-            error: 'Service not found',
-            message: `Service with ID ${data.serviceId} does not exist`,
-          },
-          { status: 404 }
-        )
-      }
+      return NextResponse.json(
+        {
+          error: 'Service not found',
+          message: `Service with ID ${data.serviceId} does not exist`,
+        },
+        { status: 404 }
+      )
     }
 
     if (!service.active) {
@@ -142,11 +82,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // If using fallback mode (no database), return mock booking
-    if (useFallback) {
+    // Check if Google Calendar is enabled
+    if (!isCalendarEnabled()) {
+      console.warn('[API] Google Calendar not configured - creating mock booking')
+
+      // Fallback: Create mock booking when calendar is not configured
+      const mockBookingId = `mock-${Date.now()}-${Math.random().toString(36).substring(7)}`
+
       const mockBooking = {
-        id: `mock-${Date.now()}`,
+        id: mockBookingId,
         serviceId: data.serviceId,
+        serviceName: service.name,
         customerName: data.customerName,
         customerEmail: data.customerEmail,
         customerPhone: data.customerPhone,
@@ -157,78 +103,93 @@ export async function POST(request: NextRequest) {
         gdprConsent: data.gdprConsent,
         depositAmount: service.depositAmount,
         status: 'PENDING_PAYMENT',
-        service: {
-          name: service.name,
-          price: service.price,
-          duration: service.duration,
-        },
+        duration: service.duration,
+        price: service.price,
         createdAt: new Date().toISOString(),
         fallbackMode: true,
       }
 
-      const paymentUrl = `/payment/${mockBooking.id}`
+      // Payment URL will redirect to Comgate
+      const paymentUrl = `/api/payments/create?bookingId=${mockBookingId}`
 
       return NextResponse.json(
         {
           booking: mockBooking,
           paymentUrl,
-          message: 'Mock booking created (database not available)',
+          warning: 'Google Calendar not configured - booking may not be synced',
         },
         { status: 201 }
       )
     }
 
-    // Check for duplicate booking (same email, date, time)
-    const existingBooking = await prisma.booking.findFirst({
-      where: {
-        customerEmail: data.customerEmail,
-        appointmentDate: new Date(data.appointmentDate),
-        appointmentTime: data.appointmentTime,
-        status: {
-          in: ['PENDING_PAYMENT', 'PAID'],
-        },
-      },
+    // Create Google Calendar event (status = PENDING)
+    console.log('[API] Creating Google Calendar event for booking')
+
+    const eventId = await createCalendarEvent({
+      id: `pending-${Date.now()}`, // Temporary ID, will be replaced by event ID
+      customerName: data.customerName,
+      customerEmail: data.customerEmail,
+      customerPhone: data.customerPhone,
+      appointmentDate: new Date(data.appointmentDate),
+      appointmentTime: data.appointmentTime,
+      duration: service.duration,
+      serviceName: service.name,
+      notes: data.notes,
+      isFirstVisit: data.isFirstVisit,
+      status: 'PENDING', // Orange color in calendar
+      depositAmount: service.depositAmount,
+      serviceId: service.id,
     })
 
-    if (existingBooking) {
-      return NextResponse.json(
-        {
-          error: 'Duplicate booking',
-          message: 'You already have a booking for this date and time',
-        },
-        { status: 409 }
-      )
+    console.log('[API] Google Calendar event created:', eventId)
+
+    // Booking object with event ID as booking ID
+    const booking = {
+      id: eventId, // Google Calendar Event ID = Booking ID
+      serviceId: data.serviceId,
+      serviceName: service.name,
+      customerName: data.customerName,
+      customerEmail: data.customerEmail,
+      customerPhone: data.customerPhone,
+      appointmentDate: data.appointmentDate,
+      appointmentTime: data.appointmentTime,
+      notes: data.notes || null,
+      isFirstVisit: data.isFirstVisit,
+      gdprConsent: data.gdprConsent,
+      depositAmount: service.depositAmount,
+      status: 'PENDING_PAYMENT',
+      duration: service.duration,
+      price: service.price,
+      createdAt: new Date().toISOString(),
     }
 
-    // Create booking with PENDING_PAYMENT status
-    const booking = await prisma.booking.create({
-      data: {
-        serviceId: data.serviceId,
-        customerName: data.customerName,
-        customerEmail: data.customerEmail,
-        customerPhone: data.customerPhone,
-        appointmentDate: new Date(data.appointmentDate),
-        appointmentTime: data.appointmentTime,
-        notes: data.notes || null,
-        isFirstVisit: data.isFirstVisit,
-        gdprConsent: data.gdprConsent,
-        depositAmount: service.depositAmount,
-        status: 'PENDING_PAYMENT',
-      },
-      include: {
-        service: {
-          select: {
-            name: true,
-            price: true,
-            duration: true,
+    // Payment URL will redirect to Comgate with booking/event ID
+    const paymentUrl = `/api/payments/create?bookingId=${eventId}`
+
+    // Send booking confirmation email with payment link
+    try {
+      await sendBookingConfirmation(
+        {
+          id: booking.id,
+          customerName: booking.customerName,
+          customerEmail: booking.customerEmail,
+          appointmentDate: new Date(booking.appointmentDate),
+          appointmentTime: booking.appointmentTime,
+          depositAmount: booking.depositAmount,
+          status: booking.status,
+          service: {
+            name: service.name,
+            price: service.price,
+            duration: service.duration,
           },
         },
-      },
-    })
-
-    // TODO: Generate Comgate payment URL
-    // For now, return a placeholder URL
-    const paymentUrl = `/payment/${booking.id}`
+        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}${paymentUrl}`
+      )
+      console.log('[API] Booking confirmation email sent')
+    } catch (emailError) {
+      console.error('[API] Failed to send booking confirmation email:', emailError)
+      // Don't fail the booking if email fails
+    }
 
     return NextResponse.json(
       {
@@ -237,21 +198,11 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     )
+
   } catch (error) {
     console.error('[API] Error creating booking:', error)
 
-    // Handle Prisma errors
-    if (error instanceof Error && error.message.includes('Prisma')) {
-      return NextResponse.json(
-        {
-          error: 'Database error',
-          message: 'Failed to create booking. Please try again.',
-        },
-        { status: 500 }
-      )
-    }
-
-    // Handle JSON parse errors
+    // Handle specific error types
     if (error instanceof SyntaxError) {
       return NextResponse.json(
         {
@@ -259,6 +210,17 @@ export async function POST(request: NextRequest) {
           message: 'Request body must be valid JSON',
         },
         { status: 400 }
+      )
+    }
+
+    // Google Calendar API errors
+    if (error instanceof Error && error.message.includes('Calendar')) {
+      return NextResponse.json(
+        {
+          error: 'Calendar error',
+          message: 'Failed to create calendar event. Please try again.',
+        },
+        { status: 500 }
       )
     }
 
