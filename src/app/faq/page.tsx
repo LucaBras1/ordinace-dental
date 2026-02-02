@@ -1,21 +1,13 @@
-import { Metadata } from 'next'
-import Link from 'next/link'
-import { PageHeader } from '@/components/ui/PageHeader'
-import { Accordion, AccordionItem } from '@/components/ui/Accordion'
-import { Button } from '@/components/ui/Button'
+'use client'
 
-export const metadata: Metadata = {
-  title: 'Časté dotazy (FAQ) | Dentální Hygiena',
-  description:
-    'Odpovědi na nejčastější otázky o dentální hygieně. Jak se připravit, co očekávat, jak často chodit na hygienu.',
-  keywords: [
-    'časté dotazy',
-    'FAQ',
-    'dentální hygiena',
-    'otázky',
-    'odpovědi',
-  ],
-}
+import Link from 'next/link'
+import { motion } from 'framer-motion'
+import { PageHeader } from '@/components/ui/PageHeader'
+import { FAQAccordion } from '@/components/ui/Accordion'
+import { Button } from '@/components/ui/Button'
+import { AnimatedSection } from '@/components/ui/AnimatedSection'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
+import { spring } from '@/lib/animations'
 
 const faqCategories = [
   {
@@ -146,6 +138,8 @@ const faqCategories = [
 ]
 
 export default function FAQPage() {
+  const prefersReducedMotion = useReducedMotion()
+
   return (
     <>
       <PageHeader
@@ -158,38 +152,63 @@ export default function FAQPage() {
         <div className="container-custom">
           <div className="mx-auto max-w-3xl space-y-12">
             {faqCategories.map((category, index) => (
-              <div key={index}>
-                <h2 className="heading-3 mb-6">{category.title}</h2>
-                <Accordion>
-                  {category.questions.map((item, idx) => (
-                    <AccordionItem key={idx} title={item.question}>
-                      {item.answer}
-                    </AccordionItem>
-                  ))}
-                </Accordion>
-              </div>
+              <motion.div
+                key={index}
+                initial={prefersReducedMotion ? {} : { opacity: 0, y: 30 }}
+                whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{
+                  ...spring.smooth,
+                  delay: index * 0.1,
+                }}
+              >
+                <FAQAccordion
+                  title={category.title}
+                  items={category.questions}
+                />
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
       {/* CTA */}
-      <section className="bg-gray-50 py-16">
+      <AnimatedSection as="section" className="bg-gray-50 py-16" animation="fade-in-up">
         <div className="container-custom text-center">
-          <h2 className="heading-2 mb-4">Nenašli jste odpověď?</h2>
-          <p className="body-large mx-auto mb-8 max-w-2xl">
+          <motion.h2
+            className="heading-2 mb-4"
+            initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
+            whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={spring.smooth}
+          >
+            Nenašli jste odpověď?
+          </motion.h2>
+          <motion.p
+            className="body-large mx-auto mb-8 max-w-2xl"
+            initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
+            whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ ...spring.smooth, delay: 0.1 }}
+          >
             Neváhejte nás kontaktovat. Rádi vám odpovíme na všechny vaše dotazy.
-          </p>
-          <div className="flex flex-col justify-center gap-4 sm:flex-row">
+          </motion.p>
+          <motion.div
+            className="flex flex-col justify-center gap-4 sm:flex-row"
+            initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
+            whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ ...spring.smooth, delay: 0.2 }}
+          >
             <Button asChild size="lg">
               <Link href="/kontakt">Kontaktovat nás</Link>
             </Button>
             <Button asChild size="lg" variant="outline">
               <a href="tel:+420123456789">Zavolat</a>
             </Button>
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </AnimatedSection>
     </>
   )
 }

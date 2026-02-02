@@ -1,21 +1,14 @@
-import { Metadata } from 'next'
+'use client'
+
 import Image from 'next/image'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/Button'
-
-export const metadata: Metadata = {
-  title: 'Služby | Dentální Hygiena',
-  description:
-    'Nabízíme profesionální dentální hygienu, bělení zubů, Air-Flow ošetření a parodontologickou péči. Moderní vybavení a individuální přístup.',
-  keywords: [
-    'dentální hygiena',
-    'bělení zubů',
-    'Air-Flow',
-    'parodontologie',
-    'čištění zubů',
-  ],
-}
+import { AnimatedGrid, AnimatedServiceCard, AnimatedFeatureList } from '@/components/ui/AnimatedGrid'
+import { AnimatedSection } from '@/components/ui/AnimatedSection'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
+import { spring } from '@/lib/animations'
 
 const services = [
   {
@@ -81,6 +74,8 @@ const services = [
 ]
 
 export default function SluzbyPage() {
+  const prefersReducedMotion = useReducedMotion()
+
   return (
     <>
       <PageHeader
@@ -92,12 +87,9 @@ export default function SluzbyPage() {
       <section className="section-padding">
         <div className="container-custom">
           {/* Services grid */}
-          <div className="grid gap-8 md:grid-cols-2">
-            {services.map((service) => (
-              <article
-                key={service.slug}
-                className="group overflow-hidden rounded-2xl bg-white shadow-card transition-all duration-300 hover:shadow-card-hover"
-              >
+          <AnimatedGrid columns={2} gap="lg" staggerDelay={0.1}>
+            {services.map((service, index) => (
+              <AnimatedServiceCard key={service.slug} index={index}>
                 {/* Image */}
                 <div className="relative aspect-[16/10] overflow-hidden bg-gray-100">
                   <Image
@@ -108,54 +100,55 @@ export default function SluzbyPage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                   <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
-                    <span className="rounded-full bg-white/90 px-3 py-1 text-sm font-medium text-primary-600">
+                    <motion.span
+                      className="rounded-full bg-white/90 px-3 py-1 text-sm font-medium text-primary-600"
+                      initial={prefersReducedMotion ? {} : { opacity: 0, y: 10 }}
+                      whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{
+                        ...spring.smooth,
+                        delay: 0.3 + index * 0.1,
+                      }}
+                    >
                       {service.price}
-                    </span>
-                    <span className="rounded-full bg-white/90 px-3 py-1 text-sm text-gray-600">
+                    </motion.span>
+                    <motion.span
+                      className="rounded-full bg-white/90 px-3 py-1 text-sm text-gray-600"
+                      initial={prefersReducedMotion ? {} : { opacity: 0, y: 10 }}
+                      whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{
+                        ...spring.smooth,
+                        delay: 0.35 + index * 0.1,
+                      }}
+                    >
                       {service.duration}
-                    </span>
+                    </motion.span>
                   </div>
                 </div>
 
                 {/* Content */}
                 <div className="p-6">
-                  <h2 className="heading-3 mb-3 group-hover:text-primary-600 transition-colors">
+                  <h2 className="heading-3 mb-3 transition-colors group-hover:text-primary-600">
                     {service.title}
                   </h2>
                   <p className="body-base mb-4">{service.description}</p>
 
                   {/* Features */}
-                  <ul className="mb-6 space-y-2">
-                    {service.features.map((feature, index) => (
-                      <li key={index} className="flex items-center gap-2 text-sm">
-                        <svg
-                          className="h-5 w-5 flex-shrink-0 text-accent-500"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                        <span className="text-gray-600">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <AnimatedFeatureList features={service.features} className="mb-6" />
 
                   <Link
                     href={`/sluzby/${service.slug}`}
                     className="inline-flex items-center gap-2 font-medium text-primary-600 transition-colors hover:text-primary-700"
                   >
                     Více informací
-                    <svg
+                    <motion.svg
                       className="h-4 w-4"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
+                      whileHover={prefersReducedMotion ? {} : { x: 4 }}
+                      transition={spring.snappy}
                     >
                       <path
                         strokeLinecap="round"
@@ -163,26 +156,54 @@ export default function SluzbyPage() {
                         strokeWidth={2}
                         d="M9 5l7 7-7 7"
                       />
-                    </svg>
+                    </motion.svg>
                   </Link>
                 </div>
-              </article>
+              </AnimatedServiceCard>
             ))}
-          </div>
+          </AnimatedGrid>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="bg-primary-600 py-16">
+      <AnimatedSection
+        as="section"
+        className="bg-primary-600 py-16"
+        animation="fade-in-up"
+      >
         <div className="container-custom text-center">
-          <h2 className="heading-2 mb-4 text-white">
+          <motion.h2
+            className="heading-2 mb-4 text-white"
+            initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
+            whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={spring.smooth}
+          >
             Připraveni na zdravější úsměv?
-          </h2>
-          <p className="body-large mx-auto mb-8 max-w-2xl text-primary-100">
+          </motion.h2>
+          <motion.p
+            className="body-large mx-auto mb-8 max-w-2xl text-primary-100"
+            initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
+            whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{
+              ...spring.smooth,
+              delay: 0.1,
+            }}
+          >
             Objednejte se ještě dnes a zjistěte, jak vám můžeme pomoci s péčí o
             vaše zuby.
-          </p>
-          <div className="flex flex-col justify-center gap-4 sm:flex-row">
+          </motion.p>
+          <motion.div
+            className="flex flex-col justify-center gap-4 sm:flex-row"
+            initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
+            whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{
+              ...spring.smooth,
+              delay: 0.2,
+            }}
+          >
             <Button asChild size="lg" variant="secondary">
               <Link href="/objednavka">Objednat se online</Link>
             </Button>
@@ -194,9 +215,9 @@ export default function SluzbyPage() {
             >
               <Link href="/cenik">Zobrazit ceník</Link>
             </Button>
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </AnimatedSection>
     </>
   )
 }

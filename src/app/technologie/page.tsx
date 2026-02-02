@@ -1,21 +1,14 @@
-import { Metadata } from 'next'
+'use client'
+
 import Image from 'next/image'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/Button'
-
-export const metadata: Metadata = {
-  title: 'Technologie | Dentální Hygiena',
-  description:
-    'Moderní vybavení naší ordinace. Ultrazvukové čištění, Air-Flow systém, digitální RTG a sterilizační technologie.',
-  keywords: [
-    'technologie',
-    'vybavení ordinace',
-    'ultrazvuk',
-    'Air-Flow',
-    'digitální RTG',
-  ],
-}
+import { AnimatedGrid, AnimatedGridItem, AnimatedFeatureList } from '@/components/ui/AnimatedGrid'
+import { AnimatedSection } from '@/components/ui/AnimatedSection'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
+import { spring } from '@/lib/animations'
 
 const technologies = [
   {
@@ -144,6 +137,8 @@ const safetyFeatures = [
 ]
 
 export default function TechnologiePage() {
+  const prefersReducedMotion = useReducedMotion()
+
   return (
     <>
       <PageHeader
@@ -155,95 +150,107 @@ export default function TechnologiePage() {
       {/* Technologies grid */}
       <section className="section-padding">
         <div className="container-custom">
-          <div className="grid gap-8 md:grid-cols-2">
+          <AnimatedGrid columns={2} gap="lg" staggerDelay={0.12}>
             {technologies.map((tech, index) => (
-              <article
+              <AnimatedGridItem
                 key={index}
+                hoverLift
                 className="overflow-hidden rounded-2xl bg-white shadow-card"
               >
-                <div className="relative aspect-[16/10] bg-gray-100">
+                <motion.div
+                  className="relative aspect-[16/10] bg-gray-100 overflow-hidden"
+                  whileHover={prefersReducedMotion ? {} : { scale: 1.05 }}
+                  transition={{ duration: 0.4 }}
+                >
                   <Image
                     src={tech.image}
                     alt={tech.title}
                     fill
                     className="object-cover"
                   />
-                </div>
+                </motion.div>
                 <div className="p-6">
                   <h2 className="heading-3 mb-3">{tech.title}</h2>
                   <p className="body-base mb-4">{tech.description}</p>
-                  <ul className="space-y-2">
-                    {tech.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-center gap-2 text-sm">
-                        <svg
-                          className="h-5 w-5 flex-shrink-0 text-accent-500"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                        <span className="text-gray-600">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <AnimatedFeatureList features={tech.features} />
                 </div>
-              </article>
+              </AnimatedGridItem>
             ))}
-          </div>
+          </AnimatedGrid>
         </div>
       </section>
 
       {/* Safety section */}
       <section className="bg-gray-50 py-16 md:py-24">
         <div className="container-custom">
-          <div className="mx-auto max-w-3xl text-center">
+          <AnimatedSection animation="fade-in-up" className="mx-auto max-w-3xl text-center mb-12">
             <h2 className="heading-2 mb-4">Hygiena a bezpečnost</h2>
-            <p className="body-large mb-12">
+            <p className="body-large">
               Vaše bezpečnost je pro nás prioritou. Dodržujeme nejvyšší standardy
               hygieny a sterilizace.
             </p>
-          </div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          </AnimatedSection>
+
+          <AnimatedGrid columns={4} gap="md" staggerDelay={0.1}>
             {safetyFeatures.map((feature, index) => (
-              <div
+              <AnimatedGridItem
                 key={index}
+                hoverLift
                 className="rounded-2xl bg-white p-6 text-center shadow-card"
               >
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary-100 text-primary-600">
+                <motion.div
+                  className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary-100 text-primary-600"
+                  whileHover={prefersReducedMotion ? {} : { scale: 1.1, rotate: 5 }}
+                  transition={spring.bouncy}
+                >
                   {feature.icon}
-                </div>
+                </motion.div>
                 <h3 className="heading-4 mb-2">{feature.title}</h3>
                 <p className="text-sm text-gray-600">{feature.description}</p>
-              </div>
+              </AnimatedGridItem>
             ))}
-          </div>
+          </AnimatedGrid>
         </div>
       </section>
 
       {/* CTA */}
-      <section className="section-padding">
+      <AnimatedSection as="section" className="section-padding" animation="fade-in-up">
         <div className="container-custom text-center">
-          <h2 className="heading-2 mb-4">Přesvědčte se sami</h2>
-          <p className="body-large mx-auto mb-8 max-w-2xl">
+          <motion.h2
+            className="heading-2 mb-4"
+            initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
+            whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={spring.smooth}
+          >
+            Přesvědčte se sami
+          </motion.h2>
+          <motion.p
+            className="body-large mx-auto mb-8 max-w-2xl"
+            initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
+            whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ ...spring.smooth, delay: 0.1 }}
+          >
             Přijďte se podívat na naši ordinaci a moderní vybavení. Rádi vám vše
             ukážeme a vysvětlíme.
-          </p>
-          <div className="flex flex-col justify-center gap-4 sm:flex-row">
+          </motion.p>
+          <motion.div
+            className="flex flex-col justify-center gap-4 sm:flex-row"
+            initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
+            whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ ...spring.smooth, delay: 0.2 }}
+          >
             <Button asChild size="lg">
               <Link href="/objednavka">Objednat se</Link>
             </Button>
             <Button asChild size="lg" variant="outline">
               <Link href="/kontakt">Kontaktovat nás</Link>
             </Button>
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </AnimatedSection>
     </>
   )
 }

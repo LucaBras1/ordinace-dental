@@ -1,20 +1,14 @@
-import { Metadata } from 'next'
+'use client'
+
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 import { PageHeader } from '@/components/ui/PageHeader'
 import { Button } from '@/components/ui/Button'
-
-export const metadata: Metadata = {
-  title: 'Pojišťovny | Dentální Hygiena',
-  description:
-    'Informace o smluvních pojišťovnách a úhradách za dentální hygienu. VZP, VOZP, ČPZP, OZP a další.',
-  keywords: [
-    'pojišťovny',
-    'VZP',
-    'zdravotní pojištění',
-    'úhrada',
-    'příspěvky',
-  ],
-}
+import { AnimatedSection } from '@/components/ui/AnimatedSection'
+import { AnimatedGrid, AnimatedGridItem } from '@/components/ui/AnimatedGrid'
+import { SimpleTimeline } from '@/components/ui/AnimatedTimeline'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
+import { spring } from '@/lib/animations'
 
 const insuranceCompanies = [
   { name: 'Všeobecná zdravotní pojišťovna', code: '111', abbr: 'VZP' },
@@ -96,7 +90,27 @@ const bonusPrograms = [
   },
 ]
 
+const claimSteps = [
+  {
+    title: 'Zkontrolujte podmínky',
+    description:
+      'Navštivte web své pojišťovny nebo zavolejte na infolinku a zjistěte, jaké příspěvky nabízí.',
+  },
+  {
+    title: 'Absolvujte ošetření',
+    description:
+      'Přijďte k nám na dentální hygienu. Po ošetření vám vystavíme doklad o zaplacení.',
+  },
+  {
+    title: 'Požádejte o příspěvek',
+    description:
+      'S dokladem požádejte svou pojišťovnu o proplacení příspěvku - obvykle online nebo na pobočce.',
+  },
+]
+
 export default function PojistovnyPage() {
+  const prefersReducedMotion = useReducedMotion()
+
   return (
     <>
       <PageHeader
@@ -108,36 +122,53 @@ export default function PojistovnyPage() {
       {/* Insurance companies */}
       <section className="section-padding">
         <div className="container-custom">
-          <h2 className="heading-2 mb-8 text-center">Smluvní pojišťovny</h2>
-          <p className="body-large mx-auto mb-12 max-w-2xl text-center">
-            Jsme smluvním partnerem všech hlavních zdravotních pojišťoven v ČR.
-          </p>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <AnimatedSection animation="fade-in-up" className="text-center mb-12">
+            <h2 className="heading-2 mb-4">Smluvní pojišťovny</h2>
+            <p className="body-large mx-auto max-w-2xl">
+              Jsme smluvním partnerem všech hlavních zdravotních pojišťoven v ČR.
+            </p>
+          </AnimatedSection>
+
+          <AnimatedGrid columns={4} gap="sm" staggerDelay={0.08}>
             {insuranceCompanies.map((company) => (
-              <div
+              <AnimatedGridItem
                 key={company.code}
+                hoverLift
                 className="rounded-2xl bg-white p-6 text-center shadow-card"
               >
-                <div className="mb-2 text-3xl font-bold text-primary-600">
+                <motion.div
+                  className="mb-2 text-3xl font-bold text-primary-600"
+                  whileHover={prefersReducedMotion ? {} : { scale: 1.1 }}
+                  transition={spring.bouncy}
+                >
                   {company.abbr}
-                </div>
+                </motion.div>
                 <p className="text-sm text-gray-600">{company.name}</p>
                 <p className="mt-2 text-xs text-gray-400">Kód: {company.code}</p>
-              </div>
+              </AnimatedGridItem>
             ))}
-          </div>
+          </AnimatedGrid>
         </div>
       </section>
 
       {/* Coverage table */}
       <section className="bg-gray-50 py-16 md:py-24">
         <div className="container-custom">
-          <h2 className="heading-2 mb-8 text-center">Co hradí pojišťovna</h2>
-          <p className="body-large mx-auto mb-12 max-w-2xl text-center">
-            Přehled služeb a jejich úhrady ze zdravotního pojištění. Přesné
-            podmínky se mohou lišit dle pojišťovny.
-          </p>
-          <div className="mx-auto max-w-4xl overflow-hidden rounded-2xl bg-white shadow-card">
+          <AnimatedSection animation="fade-in-up" className="text-center mb-12">
+            <h2 className="heading-2 mb-4">Co hradí pojišťovna</h2>
+            <p className="body-large mx-auto max-w-2xl">
+              Přehled služeb a jejich úhrady ze zdravotního pojištění. Přesné
+              podmínky se mohou lišit dle pojišťovny.
+            </p>
+          </AnimatedSection>
+
+          <motion.div
+            className="mx-auto max-w-4xl overflow-hidden rounded-2xl bg-white shadow-card"
+            initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
+            whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={spring.smooth}
+          >
             <table className="w-full">
               <thead className="bg-primary-50">
                 <tr>
@@ -154,134 +185,153 @@ export default function PojistovnyPage() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {coveredServices.map((item, index) => (
-                  <tr key={index}>
+                  <motion.tr
+                    key={index}
+                    initial={prefersReducedMotion ? {} : { opacity: 0, x: -20 }}
+                    whileInView={prefersReducedMotion ? {} : { opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{
+                      ...spring.smooth,
+                      delay: index * 0.05,
+                    }}
+                    whileHover={
+                      prefersReducedMotion
+                        ? {}
+                        : { backgroundColor: 'rgba(46, 155, 184, 0.05)' }
+                    }
+                  >
                     <td className="px-6 py-4 text-gray-900">{item.service}</td>
                     <td className="px-6 py-4">
-                      <span
+                      <motion.span
                         className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${
                           item.coverage.includes('Hrazeno')
                             ? 'bg-success-100 text-success-700'
                             : item.coverage.includes('Částečně')
-                            ? 'bg-warning-100 text-warning-700'
-                            : 'bg-gray-100 text-gray-600'
+                              ? 'bg-warning-100 text-warning-700'
+                              : 'bg-gray-100 text-gray-600'
                         }`}
+                        whileHover={prefersReducedMotion ? {} : { scale: 1.05 }}
+                        transition={spring.bouncy}
                       >
                         {item.coverage}
-                      </span>
+                      </motion.span>
                     </td>
                     <td className="hidden px-6 py-4 text-sm text-gray-500 sm:table-cell">
                       {item.note}
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Bonus programs */}
       <section className="section-padding">
         <div className="container-custom">
-          <h2 className="heading-2 mb-8 text-center">Bonusové programy</h2>
-          <p className="body-large mx-auto mb-12 max-w-2xl text-center">
-            Mnoho pojišťoven nabízí příspěvky na dentální hygienu v rámci
-            preventivních programů. Informujte se u své pojišťovny.
-          </p>
-          <div className="grid gap-6 md:grid-cols-2">
+          <AnimatedSection animation="fade-in-up" className="text-center mb-12">
+            <h2 className="heading-2 mb-4">Bonusové programy</h2>
+            <p className="body-large mx-auto max-w-2xl">
+              Mnoho pojišťoven nabízí příspěvky na dentální hygienu v rámci
+              preventivních programů. Informujte se u své pojišťovny.
+            </p>
+          </AnimatedSection>
+
+          <AnimatedGrid columns={2} gap="md" staggerDelay={0.1}>
             {bonusPrograms.map((program, index) => (
-              <div
+              <AnimatedGridItem
                 key={index}
+                hoverLift
                 className="rounded-2xl bg-white p-6 shadow-card"
               >
                 <div className="mb-4 flex items-center justify-between">
-                  <span className="text-2xl font-bold text-primary-600">
+                  <motion.span
+                    className="text-2xl font-bold text-primary-600"
+                    whileHover={prefersReducedMotion ? {} : { scale: 1.1 }}
+                    transition={spring.bouncy}
+                  >
                     {program.insurance}
-                  </span>
-                  <a
+                  </motion.span>
+                  <motion.a
                     href={program.link}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-primary-600 hover:underline"
+                    whileHover={prefersReducedMotion ? {} : { x: 4 }}
+                    transition={spring.snappy}
                   >
                     Více info
-                  </a>
+                  </motion.a>
                 </div>
                 <h3 className="heading-4 mb-2">{program.program}</h3>
                 <p className="body-base">{program.benefit}</p>
-              </div>
+              </AnimatedGridItem>
             ))}
-          </div>
+          </AnimatedGrid>
         </div>
       </section>
 
       {/* How to claim */}
-      <section className="bg-primary-50 py-16">
+      <AnimatedSection
+        as="section"
+        className="bg-primary-50 py-16"
+        animation="fade-in-up"
+      >
         <div className="container-custom">
           <div className="mx-auto max-w-3xl">
-            <h2 className="heading-2 mb-8 text-center">
+            <motion.h2
+              className="heading-2 mb-8 text-center"
+              initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
+              whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={spring.smooth}
+            >
               Jak uplatnit nárok na příspěvek
-            </h2>
-            <div className="space-y-6">
-              <div className="flex gap-4">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary-500 text-white">
-                  1
-                </div>
-                <div>
-                  <h3 className="heading-4 mb-1">Zkontrolujte podmínky</h3>
-                  <p className="body-base">
-                    Navštivte web své pojišťovny nebo zavolejte na infolinku a
-                    zjistěte, jaké příspěvky nabízí.
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary-500 text-white">
-                  2
-                </div>
-                <div>
-                  <h3 className="heading-4 mb-1">Absolvujte ošetření</h3>
-                  <p className="body-base">
-                    Přijďte k nám na dentální hygienu. Po ošetření vám vystavíme
-                    doklad o zaplacení.
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary-500 text-white">
-                  3
-                </div>
-                <div>
-                  <h3 className="heading-4 mb-1">Požádejte o příspěvek</h3>
-                  <p className="body-base">
-                    S dokladem požádejte svou pojišťovnu o proplacení příspěvku
-                    - obvykle online nebo na pobočce.
-                  </p>
-                </div>
-              </div>
-            </div>
+            </motion.h2>
+            <SimpleTimeline items={claimSteps} staggerDelay={0.15} />
           </div>
         </div>
-      </section>
+      </AnimatedSection>
 
       {/* CTA */}
-      <section className="section-padding">
+      <AnimatedSection as="section" className="section-padding" animation="fade-in-up">
         <div className="container-custom text-center">
-          <h2 className="heading-2 mb-4">Máte dotazy ohledně pojištění?</h2>
-          <p className="body-large mx-auto mb-8 max-w-2xl">
+          <motion.h2
+            className="heading-2 mb-4"
+            initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
+            whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={spring.smooth}
+          >
+            Máte dotazy ohledně pojištění?
+          </motion.h2>
+          <motion.p
+            className="body-large mx-auto mb-8 max-w-2xl"
+            initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
+            whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ ...spring.smooth, delay: 0.1 }}
+          >
             Rádi vám pomůžeme s informacemi o úhradách a příspěvcích.
             Kontaktujte nás.
-          </p>
-          <div className="flex flex-col justify-center gap-4 sm:flex-row">
+          </motion.p>
+          <motion.div
+            className="flex flex-col justify-center gap-4 sm:flex-row"
+            initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
+            whileInView={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ ...spring.smooth, delay: 0.2 }}
+          >
             <Button asChild size="lg">
               <Link href="/kontakt">Kontaktovat nás</Link>
             </Button>
             <Button asChild size="lg" variant="outline">
               <Link href="/cenik">Zobrazit ceník</Link>
             </Button>
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </AnimatedSection>
     </>
   )
 }
