@@ -254,7 +254,7 @@ export function Hero() {
 
             {/* Floating card - Left */}
             <motion.div
-              className="absolute -left-8 bottom-12"
+              className="absolute -left-8 bottom-24"
               initial={prefersReducedMotion ? {} : { opacity: 0, x: -20, y: 20 }}
               animate={{ opacity: 1, x: 0, y: 0 }}
               transition={{ ...spring.smooth, delay: 0.6 }}
