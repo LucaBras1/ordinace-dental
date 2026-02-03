@@ -26,12 +26,13 @@ interface TimeSlot {
 
 interface BookingFormData {
   serviceId: string
-  date: string
-  time: string
-  name: string
-  phone: string
-  email: string
-  note: string
+  appointmentDate: string
+  appointmentTime: string
+  customerName: string
+  customerPhone: string
+  customerEmail: string
+  notes?: string
+  isFirstVisit: boolean
   gdprConsent: boolean
 }
 
@@ -182,12 +183,13 @@ export function BookingForm() {
 
       const bookingData: BookingFormData = {
         serviceId: selectedServiceId,
-        date: selectedDate!.toISOString().split('T')[0],
-        time: selectedTime!,
-        name: name.trim(),
-        phone: phone.trim(),
-        email: email.trim(),
-        note: note.trim(),
+        appointmentDate: selectedDate!.toISOString().split('T')[0],
+        appointmentTime: selectedTime!,
+        customerName: name.trim(),
+        customerPhone: phone.trim(),
+        customerEmail: email.trim(),
+        notes: note.trim() || undefined,
+        isFirstVisit: true, // Default to first visit for web bookings
         gdprConsent,
       }
 

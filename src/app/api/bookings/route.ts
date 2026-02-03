@@ -1,17 +1,27 @@
 /**
  * Bookings API Route
  *
- * POST /api/bookings - Create a new booking as Google Calendar event
+ * POST /api/bookings - Create a new pending booking
  *
- * Google Calendar is the single source of truth for all bookings.
- * Booking ID = Google Calendar Event ID.
+ * IMPORTANT: This endpoint does NOT create a Google Calendar event!
+ * The GCal event is created ONLY after successful payment (in webhook).
+ *
+ * This approach enables integration with SmartMEDIX:
+ * - SmartMEDIX is the primary source of truth
+ * - Web reservations appear in calendar only after payment
+ * - No "ghost" events from abandoned payments
+ *
+ * Flow:
+ * 1. Validate booking data
+ * 2. Store in pending bookings (in-memory, 30min TTL)
+ * 3. Return payment URL with pending booking ID
+ * 4. Comgate webhook creates GCal event after successful payment
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createBookingSchema, formatZodError } from '@/lib/validations'
 import { getServiceById } from '@/lib/services'
-import { createCalendarEvent, isCalendarEnabled } from '@/lib/google-calendar'
-import { sendBookingConfirmation } from '@/lib/email'
+import { storePendingBooking, PendingBookingData } from '@/lib/pending-bookings'
 
 // Force dynamic rendering for API operations
 export const dynamic = 'force-dynamic'
@@ -19,14 +29,14 @@ export const dynamic = 'force-dynamic'
 /**
  * POST /api/bookings
  *
- * Creates a new booking as a Google Calendar event with PENDING status.
- * Returns booking details and payment URL for Comgate.
+ * Creates a new pending booking and returns payment URL.
+ * The Google Calendar event is created ONLY after successful payment.
  *
  * @body {CreateBookingInput} - Validated booking data
  *
  * @returns {
+ *   pendingBookingId: string (UUID for payment reference)
  *   booking: {
- *     id: string (Google Calendar Event ID)
  *     serviceId: string
  *     serviceName: string
  *     customerName: string
@@ -34,7 +44,7 @@ export const dynamic = 'force-dynamic'
  *     appointmentDate: string
  *     appointmentTime: string
  *     depositAmount: number
- *     status: string
+ *     status: 'PENDING_PAYMENT'
  *   }
  *   paymentUrl: string
  * }
@@ -82,70 +92,38 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if Google Calendar is enabled
-    if (!isCalendarEnabled()) {
-      console.warn('[API] Google Calendar not configured - creating mock booking')
-
-      // Fallback: Create mock booking when calendar is not configured
-      const mockBookingId = `mock-${Date.now()}-${Math.random().toString(36).substring(7)}`
-
-      const mockBooking = {
-        id: mockBookingId,
-        serviceId: data.serviceId,
-        serviceName: service.name,
-        customerName: data.customerName,
-        customerEmail: data.customerEmail,
-        customerPhone: data.customerPhone,
-        appointmentDate: data.appointmentDate,
-        appointmentTime: data.appointmentTime,
-        notes: data.notes || null,
-        isFirstVisit: data.isFirstVisit,
-        gdprConsent: data.gdprConsent,
-        depositAmount: service.depositAmount,
-        status: 'PENDING_PAYMENT',
-        duration: service.duration,
-        price: service.price,
-        createdAt: new Date().toISOString(),
-        fallbackMode: true,
-      }
-
-      // Payment URL will redirect to Comgate
-      const paymentUrl = `/api/payments/create?bookingId=${mockBookingId}`
-
-      return NextResponse.json(
-        {
-          booking: mockBooking,
-          paymentUrl,
-          warning: 'Google Calendar not configured - booking may not be synced',
-        },
-        { status: 201 }
-      )
-    }
-
-    // Create Google Calendar event (status = PENDING)
-    console.log('[API] Creating Google Calendar event for booking')
-
-    const eventId = await createCalendarEvent({
-      id: `pending-${Date.now()}`, // Temporary ID, will be replaced by event ID
+    // Prepare pending booking data
+    const pendingData: PendingBookingData = {
+      serviceId: data.serviceId,
+      serviceName: service.name,
+      duration: service.duration,
+      price: service.price,
+      depositAmount: service.depositAmount,
       customerName: data.customerName,
       customerEmail: data.customerEmail,
       customerPhone: data.customerPhone,
-      appointmentDate: new Date(data.appointmentDate),
+      appointmentDate: data.appointmentDate,
       appointmentTime: data.appointmentTime,
-      duration: service.duration,
-      serviceName: service.name,
       notes: data.notes,
       isFirstVisit: data.isFirstVisit,
-      status: 'PENDING', // Orange color in calendar
-      depositAmount: service.depositAmount,
-      serviceId: service.id,
+      gdprConsent: data.gdprConsent,
+      createdAt: new Date().toISOString(),
+    }
+
+    // Store pending booking (NOT in Google Calendar yet!)
+    const pendingBookingId = storePendingBooking(pendingData)
+
+    console.log('[API] Created pending booking:', {
+      pendingBookingId,
+      serviceName: service.name,
+      customerName: data.customerName,
+      appointmentDate: data.appointmentDate,
+      appointmentTime: data.appointmentTime,
     })
 
-    console.log('[API] Google Calendar event created:', eventId)
-
-    // Booking object with event ID as booking ID
+    // Booking object for response (without ID - it doesn't exist in GCal yet)
     const booking = {
-      id: eventId, // Google Calendar Event ID = Booking ID
+      pendingId: pendingBookingId,
       serviceId: data.serviceId,
       serviceName: service.name,
       customerName: data.customerName,
@@ -163,38 +141,18 @@ export async function POST(request: NextRequest) {
       createdAt: new Date().toISOString(),
     }
 
-    // Payment URL will redirect to Comgate with booking/event ID
-    const paymentUrl = `/api/payments/create?bookingId=${eventId}`
+    // Payment URL with pending booking ID (NOT GCal event ID)
+    const paymentUrl = `/api/payments/create?pendingBookingId=${pendingBookingId}`
 
-    // Send booking confirmation email with payment link
-    try {
-      await sendBookingConfirmation(
-        {
-          id: booking.id,
-          customerName: booking.customerName,
-          customerEmail: booking.customerEmail,
-          appointmentDate: new Date(booking.appointmentDate),
-          appointmentTime: booking.appointmentTime,
-          depositAmount: booking.depositAmount,
-          status: booking.status,
-          service: {
-            name: service.name,
-            price: service.price,
-            duration: service.duration,
-          },
-        },
-        `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}${paymentUrl}`
-      )
-      console.log('[API] Booking confirmation email sent')
-    } catch (emailError) {
-      console.error('[API] Failed to send booking confirmation email:', emailError)
-      // Don't fail the booking if email fails
-    }
+    // NOTE: Confirmation email is sent from webhook AFTER successful payment
+    // This ensures we don't send emails for abandoned payments
 
     return NextResponse.json(
       {
+        pendingBookingId,
         booking,
         paymentUrl,
+        message: 'Booking created. Please complete payment to confirm your appointment.',
       },
       { status: 201 }
     )
@@ -210,17 +168,6 @@ export async function POST(request: NextRequest) {
           message: 'Request body must be valid JSON',
         },
         { status: 400 }
-      )
-    }
-
-    // Google Calendar API errors
-    if (error instanceof Error && error.message.includes('Calendar')) {
-      return NextResponse.json(
-        {
-          error: 'Calendar error',
-          message: 'Failed to create calendar event. Please try again.',
-        },
-        { status: 500 }
       )
     }
 

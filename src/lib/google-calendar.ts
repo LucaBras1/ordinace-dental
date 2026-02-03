@@ -241,15 +241,17 @@ export async function createCalendarEvent(booking: BookingData): Promise<string>
     const summary = `${booking.serviceName} - ${booking.customerName}`
 
     // Build event description with structured data for parsing
+    // "Zdroj: WEB" is added for SmartMEDIX integration - distinguishes web bookings
     const description = [
       `Jméno: ${booking.customerName}`,
       `Kontakt: ${booking.customerPhone}`,
       `Email: ${booking.customerEmail}`,
       `První návštěva: ${booking.isFirstVisit ? 'Ano' : 'Ne'}`,
       `Status: ${booking.status}`,
-      booking.depositAmount ? `Kauce: ${booking.depositAmount}` : '',
+      booking.depositAmount ? `Kauce: ${booking.depositAmount} (ZAPLACENO)` : '',
       booking.serviceId ? `ServiceID: ${booking.serviceId}` : '',
       booking.notes ? `Poznámka: ${booking.notes}` : '',
+      `Zdroj: WEB`, // For SmartMEDIX integration - identifies web-originated bookings
     ]
       .filter(Boolean)
       .join('\n')

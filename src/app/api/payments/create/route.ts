@@ -2,13 +2,17 @@
  * Payment Creation API
  *
  * POST /api/payments/create
+ * GET /api/payments/create?pendingBookingId=<id>
  *
- * Vytvoří Comgate platbu pro existující booking (Google Calendar event) a vrátí redirect URL.
+ * Creates a Comgate payment for a pending booking and returns redirect URL.
  *
- * Request Body:
- * {
- *   bookingId: string (Google Calendar Event ID)
- * }
+ * IMPORTANT: This endpoint now works with PENDING BOOKINGS (in-memory),
+ * not Google Calendar events. The GCal event is created AFTER payment
+ * succeeds (in the Comgate webhook).
+ *
+ * Request:
+ * - POST body: { pendingBookingId: string }
+ * - GET query: ?pendingBookingId=<uuid>
  *
  * Response:
  * {
@@ -20,186 +24,138 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createPayment } from '@/lib/comgate'
-import { getCalendarEvent, isCalendarEnabled } from '@/lib/google-calendar'
-import { getServiceById } from '@/lib/services'
+import { getPendingBooking } from '@/lib/pending-bookings'
 
 // ============================================
-// Helper Functions
+// GET /api/payments/create?pendingBookingId=<id>
 // ============================================
 
 /**
- * Parse booking data from Google Calendar event description.
+ * GET endpoint for creating payment (redirect from booking form).
+ * The booking form redirects here with pendingBookingId in query params.
  */
-function parseEventDescription(description: string): {
-  phone?: string
-  email?: string
-  name?: string
-  depositAmount?: number
-} {
-  const lines = description.split('\n')
-  const result: Record<string, string> = {}
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const pendingBookingId = searchParams.get('pendingBookingId')
 
-  for (const line of lines) {
-    const [key, ...valueParts] = line.split(':')
-    if (key && valueParts.length > 0) {
-      result[key.trim().toLowerCase()] = valueParts.join(':').trim()
+    if (!pendingBookingId) {
+      return NextResponse.json(
+        { success: false, error: 'Missing pendingBookingId parameter' },
+        { status: 400 }
+      )
     }
+
+    console.log('[Payment API] Creating payment for pending booking:', pendingBookingId)
+
+    // Get pending booking data
+    const pendingBooking = getPendingBooking(pendingBookingId)
+
+    if (!pendingBooking) {
+      console.error('[Payment API] Pending booking not found or expired:', pendingBookingId)
+      // Redirect to error page instead of JSON response (user-facing)
+      return NextResponse.redirect(
+        new URL(`/objednavka/chyba?reason=expired`, request.url)
+      )
+    }
+
+    // Create Comgate payment
+    const label = `Kauce - ${pendingBooking.serviceName}`
+
+    console.log('[Payment API] Creating Comgate payment:', {
+      pendingBookingId,
+      price: pendingBooking.depositAmount,
+      label,
+      email: pendingBooking.customerEmail,
+    })
+
+    const result = await createPayment({
+      bookingId: pendingBookingId, // UUID is used as refId
+      price: pendingBooking.depositAmount,
+      label,
+      email: pendingBooking.customerEmail,
+      customerName: pendingBooking.customerName,
+      customerPhone: pendingBooking.customerPhone,
+    })
+
+    if (!result.success) {
+      console.error('[Payment API] Payment creation failed:', result.error)
+      return NextResponse.redirect(
+        new URL(`/objednavka/chyba?reason=payment_failed&error=${encodeURIComponent(result.error)}`, request.url)
+      )
+    }
+
+    console.log('[Payment API] Redirecting to Comgate:', {
+      pendingBookingId,
+      transId: result.transId,
+    })
+
+    // Redirect to Comgate payment page
+    return NextResponse.redirect(result.redirectUrl)
+
+  } catch (error) {
+    console.error('[Payment API] Error creating payment:', error)
+    return NextResponse.redirect(
+      new URL('/objednavka/chyba?reason=unknown', request.url)
+    )
   }
-
-  return {
-    phone: result['kontakt'],
-    email: result['email'],
-    name: result['jméno'] || result['name'],
-    depositAmount: result['kauce'] ? parseInt(result['kauce'], 10) : undefined,
-  }
-}
-
-/**
- * Parse service ID from event summary.
- */
-function parseServiceIdFromSummary(summary: string): string {
-  const serviceName = summary.split(' - ')[0]?.trim() || ''
-
-  const serviceMap: Record<string, string> = {
-    'Dentální hygiena': 'dentalni-hygiena',
-    'Bělení zubů': 'beleni-zubu',
-    'Preventivní prohlídka': 'preventivni-prohlidka',
-    'Léčba zubního kazu': 'lecba-zubniho-kazu',
-    'Extrakce zubu': 'extrakce-zubu',
-  }
-
-  return serviceMap[serviceName] || ''
-}
-
-/**
- * Get status from calendar event color ID.
- */
-function getStatusFromColorId(colorId?: string): string {
-  const colorMap: Record<string, string> = {
-    '10': 'PAID',
-    '6': 'PENDING_PAYMENT',
-    '8': 'NO_SHOW',
-    '11': 'CANCELLED',
-  }
-  return colorMap[colorId || ''] || 'PENDING_PAYMENT'
-}
-
-// ============================================
-// Types
-// ============================================
-
-interface CreatePaymentRequest {
-  bookingId: string
 }
 
 // ============================================
 // POST /api/payments/create
 // ============================================
 
+interface CreatePaymentRequest {
+  pendingBookingId: string
+}
+
+/**
+ * POST endpoint for programmatic payment creation.
+ * Returns payment URL in JSON response instead of redirect.
+ */
 export async function POST(request: NextRequest) {
   try {
-    // 1. Parse request body
+    // Parse request body
     const body: CreatePaymentRequest = await request.json()
-    const { bookingId } = body
+    const { pendingBookingId } = body
 
-    if (!bookingId) {
+    if (!pendingBookingId) {
       return NextResponse.json(
-        { success: false, error: 'Missing bookingId' },
+        { success: false, error: 'Missing pendingBookingId' },
         { status: 400 }
       )
     }
 
-    console.log('[Payment API] Creating payment for booking:', bookingId)
+    console.log('[Payment API] Creating payment for pending booking:', pendingBookingId)
 
-    // 2. Check if Google Calendar is configured
-    if (!isCalendarEnabled()) {
-      console.warn('[Payment API] Google Calendar not configured - mock payment')
+    // Get pending booking data
+    const pendingBooking = getPendingBooking(pendingBookingId)
 
-      // Return mock payment URL for testing
-      return NextResponse.json({
-        success: true,
-        paymentUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/rezervace/potvrzeni?bookingId=${bookingId}&mock=true`,
-        transId: `mock-${Date.now()}`,
-        warning: 'Google Calendar not configured - mock payment',
-      })
-    }
-
-    // 3. Get booking from Google Calendar
-    let event
-    try {
-      event = await getCalendarEvent(bookingId)
-    } catch (error) {
-      console.error('[Payment API] Booking not found:', bookingId)
+    if (!pendingBooking) {
+      console.error('[Payment API] Pending booking not found or expired:', pendingBookingId)
       return NextResponse.json(
-        { success: false, error: 'Booking not found' },
+        { success: false, error: 'Booking not found or expired. Please start a new booking.' },
         { status: 404 }
       )
     }
 
-    // 4. Parse booking data from event
-    const bookingData = parseEventDescription(event.description || '')
-    const serviceId = parseServiceIdFromSummary(event.summary || '')
-    const service = getServiceById(serviceId)
-
-    if (!service) {
-      console.error('[Payment API] Service not found for booking:', bookingId)
-      return NextResponse.json(
-        { success: false, error: 'Service not found' },
-        { status: 404 }
-      )
-    }
-
-    // 5. Validate booking status
-    const status = getStatusFromColorId(event.colorId)
-
-    if (status === 'PAID') {
-      console.log('[Payment API] Booking already paid:', bookingId)
-      return NextResponse.json(
-        { success: false, error: 'Booking already paid' },
-        { status: 400 }
-      )
-    }
-
-    if (status === 'CANCELLED') {
-      console.log('[Payment API] Booking is cancelled:', bookingId)
-      return NextResponse.json(
-        { success: false, error: 'Booking is cancelled' },
-        { status: 400 }
-      )
-    }
-
-    // 6. Get customer info
-    const customerEmail = bookingData.email || ''
-    const customerName = bookingData.name || event.summary.split(' - ')[1] || 'Zákazník'
-    const customerPhone = bookingData.phone || ''
-    const depositAmount = bookingData.depositAmount || service.depositAmount
-
-    if (!customerEmail) {
-      console.error('[Payment API] Missing customer email:', bookingId)
-      return NextResponse.json(
-        { success: false, error: 'Missing customer email' },
-        { status: 400 }
-      )
-    }
-
-    // 7. Create payment label
-    const label = `Kauce - ${service.name}`
+    // Create Comgate payment
+    const label = `Kauce - ${pendingBooking.serviceName}`
 
     console.log('[Payment API] Creating Comgate payment:', {
-      bookingId,
-      price: depositAmount,
+      pendingBookingId,
+      price: pendingBooking.depositAmount,
       label,
-      email: customerEmail,
+      email: pendingBooking.customerEmail,
     })
 
-    // 8. Create payment via Comgate
     const result = await createPayment({
-      bookingId: bookingId, // Event ID = Booking ID
-      price: depositAmount,
+      bookingId: pendingBookingId, // UUID is used as refId for Comgate
+      price: pendingBooking.depositAmount,
       label,
-      email: customerEmail,
-      customerName,
-      customerPhone,
+      email: pendingBooking.customerEmail,
+      customerName: pendingBooking.customerName,
+      customerPhone: pendingBooking.customerPhone,
     })
 
     if (!result.success) {
@@ -211,20 +167,27 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('[Payment API] Payment created successfully:', {
-      bookingId,
+      pendingBookingId,
       transId: result.transId,
       redirectUrl: result.redirectUrl,
     })
 
-    // 9. Return payment URL
     return NextResponse.json({
       success: true,
       paymentUrl: result.redirectUrl,
       transId: result.transId,
+      pendingBookingId,
     })
 
   } catch (error) {
     console.error('[Payment API] Error creating payment:', error)
+
+    if (error instanceof SyntaxError) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid JSON in request body' },
+        { status: 400 }
+      )
+    }
 
     return NextResponse.json(
       {
@@ -234,28 +197,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-}
-
-// ============================================
-// GET /api/payments/create
-// ============================================
-
-/**
- * GET endpoint pro dokumentaci/debugging.
- */
-export async function GET() {
-  return NextResponse.json({
-    message: 'Payment creation endpoint',
-    method: 'POST',
-    description: 'Creates a Comgate payment for an existing Google Calendar booking.',
-    requiredBody: {
-      bookingId: 'string (Google Calendar Event ID)',
-    },
-    response: {
-      success: 'boolean',
-      paymentUrl: 'string (if success)',
-      transId: 'string (if success)',
-      error: 'string (if failed)',
-    },
-  })
 }
