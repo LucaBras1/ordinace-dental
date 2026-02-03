@@ -9,9 +9,9 @@ const contactData = {
   phone: '+420 601 532 676',
   email: 'info@dentalni-hygiena.cz',
   address: {
-    street: 'Zdravotní 123',
-    city: 'Praha 1',
-    zip: '110 00',
+    street: 'Korunní 727/7',
+    city: 'Vinohrady',
+    zip: '120 00',
   },
   hours: [
     { day: 'Pondělí', time: '13:00 - 18:00' },

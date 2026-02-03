@@ -29,7 +29,7 @@ const transportOptions = [
     ),
     title: 'Metrem',
     description:
-      'Stanice Můstek (linka A, B) - 5 minut chůze směrem k Václavskému náměstí.',
+      'Stanice Náměstí Míru (linka A) - 5 minut chůze po ulici Korunní.',
   },
   {
     icon: (
@@ -48,7 +48,8 @@ const transportOptions = [
       </svg>
     ),
     title: 'Tramvají',
-    description: 'Zastávka Václavské náměstí - tramvaje č. 3, 9, 14, 24.',
+    description:
+      'Zastávka Vinohradská tržnice - tramvaje č. 11, 13 (Vinohradská ulice).',
   },
   {
     icon: (
@@ -68,7 +69,7 @@ const transportOptions = [
     ),
     title: 'Autem',
     description:
-      'Parkování v blízkém parkovacím domě. Modrá zóna - první hodina zdarma pro pacienty.',
+      'Parkování v přilehlých ulicích. Modrá zóna P2 - rezidentní parkování.',
   },
 ]
 

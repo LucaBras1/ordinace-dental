@@ -35,7 +35,7 @@ export default function OchranaOsobnichUdajuPage() {
                 <strong>IČO:</strong> 12345678
               </li>
               <li>
-                <strong>Adresa:</strong> Zdravotní 123, 110 00 Praha 1
+                <strong>Adresa:</strong> Korunní 727/7, 120 00 Vinohrady
               </li>
               <li>
                 <strong>E-mail:</strong> info@dentalni-hygiena.cz
@@ -191,7 +191,7 @@ export default function OchranaOsobnichUdajuPage() {
                 <strong>Telefon:</strong> +420 601 532 676
               </li>
               <li>
-                <strong>Písemně:</strong> Zdravotní 123, 110 00 Praha 1
+                <strong>Písemně:</strong> Korunní 727/7, 120 00 Vinohrady
               </li>
             </ul>
 
