@@ -122,7 +122,7 @@ export default function PristupnostPage() {
               </li>
               <li>
                 <strong>Telefon:</strong>{' '}
-                <a href="tel:+420123456789">+420 123 456 789</a>
+                <a href="tel:+420601532676">+420 601 532 676</a>
               </li>
               <li>
                 <strong>Kontaktní formulář:</strong>{' '}

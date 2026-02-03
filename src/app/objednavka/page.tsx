@@ -131,7 +131,7 @@ export default function ObjednavkaPage() {
                 </motion.h3>
                 <p className="body-base mb-4">Volejte nás v ordinačních hodinách:</p>
                 <motion.a
-                  href="tel:+420123456789"
+                  href="tel:+420601532676"
                   className="flex items-center gap-3 text-lg font-semibold text-primary-600 transition-colors hover:text-primary-700"
                   whileHover={prefersReducedMotion ? {} : { x: 4, scale: 1.02 }}
                   transition={spring.snappy}
@@ -151,9 +151,9 @@ export default function ObjednavkaPage() {
                       d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
                     />
                   </motion.svg>
-                  +420 123 456 789
+                  +420 601 532 676
                 </motion.a>
-                <p className="mt-3 text-sm text-gray-500">Po-Pá: 8:00 - 17:00</p>
+                <p className="mt-3 text-sm text-gray-500">Po-Pá: v ordinačních hodinách</p>
               </motion.div>
 
               {/* Info box */}

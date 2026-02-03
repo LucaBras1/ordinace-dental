@@ -41,7 +41,7 @@ export default function OchranaOsobnichUdajuPage() {
                 <strong>E-mail:</strong> info@dentalni-hygiena.cz
               </li>
               <li>
-                <strong>Telefon:</strong> +420 123 456 789
+                <strong>Telefon:</strong> +420 601 532 676
               </li>
             </ul>
 
@@ -188,7 +188,7 @@ export default function OchranaOsobnichUdajuPage() {
                 <strong>E-mail:</strong> gdpr@dentalni-hygiena.cz
               </li>
               <li>
-                <strong>Telefon:</strong> +420 123 456 789
+                <strong>Telefon:</strong> +420 601 532 676
               </li>
               <li>
                 <strong>Písemně:</strong> Zdravotní 123, 110 00 Praha 1

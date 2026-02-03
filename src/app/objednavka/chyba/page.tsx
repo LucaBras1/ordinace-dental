@@ -188,10 +188,10 @@ function ChybaContent() {
                 </Link>{' '}
                 nebo volejte na{' '}
                 <a
-                  href="tel:+420123456789"
+                  href="tel:+420601532676"
                   className="font-medium text-primary-600 hover:text-primary-700"
                 >
-                  +420 123 456 789
+                  +420 601 532 676
                 </a>
               </p>
             </div>

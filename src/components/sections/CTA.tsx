@@ -53,7 +53,7 @@ export function CTA() {
               className="border-white text-white transition-all duration-300 hover:scale-105 hover:bg-white/10"
               asChild
             >
-              <Link href="tel:+420123456789">
+              <Link href="tel:+420601532676">
                 <svg
                   className="mr-2 h-5 w-5"
                   fill="none"
@@ -68,7 +68,7 @@ export function CTA() {
                     d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
                   />
                 </svg>
-                +420 123 456 789
+                +420 601 532 676
               </Link>
             </Button>
           </div>

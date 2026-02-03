@@ -6,7 +6,7 @@ interface ContactInfoProps {
 }
 
 const contactData = {
-  phone: '+420 123 456 789',
+  phone: '+420 601 532 676',
   email: 'info@dentalni-hygiena.cz',
   address: {
     street: 'Zdravotní 123',
@@ -14,11 +14,11 @@ const contactData = {
     zip: '110 00',
   },
   hours: [
-    { day: 'Pondělí', time: '8:00 - 17:00' },
-    { day: 'Úterý', time: '8:00 - 17:00' },
-    { day: 'Středa', time: '8:00 - 17:00' },
-    { day: 'Čtvrtek', time: '8:00 - 17:00' },
-    { day: 'Pátek', time: '8:00 - 15:00' },
+    { day: 'Pondělí', time: '13:00 - 18:00' },
+    { day: 'Úterý', time: '8:00 - 12:00' },
+    { day: 'Středa', time: '8:00 - 12:00, 13:00 - 14:00' },
+    { day: 'Čtvrtek', time: 'Neordinuje' },
+    { day: 'Pátek', time: '8:00 - 12:00' },
     { day: 'Sobota', time: 'Zavřeno' },
     { day: 'Neděle', time: 'Zavřeno' },
   ],
@@ -146,7 +146,7 @@ export function ContactInfo({ className, showHours = true }: ContactInfoProps) {
                   <span
                     className={cn(
                       'font-medium',
-                      item.time === 'Zavřeno'
+                      item.time === 'Zavřeno' || item.time === 'Neordinuje'
                         ? 'text-gray-400'
                         : 'text-gray-900'
                     )}

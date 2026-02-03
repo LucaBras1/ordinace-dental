@@ -19,8 +19,8 @@ const navigation = [
   { name: 'Kontakt', href: '/kontakt' },
 ]
 
-const PHONE_NUMBER = '+420 123 456 789'
-const PHONE_HREF = 'tel:+420123456789'
+const PHONE_NUMBER = '+420 601 532 676'
+const PHONE_HREF = 'tel:+420601532676'
 
 export function Header() {
   const pathname = usePathname()

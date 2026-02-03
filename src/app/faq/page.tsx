@@ -66,7 +66,7 @@ const faqCategories = [
       {
         question: 'Jak se mohu objednat?',
         answer:
-          'Objednat se můžete online přes náš rezervační systém, telefonicky na čísle +420 123 456 789, nebo e-mailem na info@dentalni-hygiena.cz.',
+          'Objednat se můžete online přes náš rezervační systém, telefonicky na čísle +420 601 532 676, nebo e-mailem na info@dentalni-hygiena.cz.',
       },
       {
         question: 'Mohu přijít bez objednání?',
@@ -204,7 +204,7 @@ export default function FAQPage() {
               <Link href="/kontakt">Kontaktovat nás</Link>
             </Button>
             <Button asChild size="lg" variant="outline">
-              <a href="tel:+420123456789">Zavolat</a>
+              <a href="tel:+420601532676">Zavolat</a>
             </Button>
           </motion.div>
         </div>

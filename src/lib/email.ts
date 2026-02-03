@@ -88,7 +88,7 @@ function getFromAddress(): string {
  */
 function getContactInfo(): { phone: string; email: string; address: string } {
   return {
-    phone: process.env.CONTACT_PHONE || '+420 123 456 789',
+    phone: process.env.CONTACT_PHONE || '+420 601 532 676',
     email: process.env.CONTACT_EMAIL || 'info@ordinace.cz',
     address: process.env.CONTACT_ADDRESS || 'Adresa ordinace, Praha',
   }

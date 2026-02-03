@@ -241,7 +241,7 @@ export function ServiceDetailContent({ service }: ServiceDetailContentProps) {
                 variant="outline"
                 className="border-white text-white hover:bg-white/10"
               >
-                <a href="tel:+420123456789">Zavolat</a>
+                <a href="tel:+420601532676">Zavolat</a>
               </Button>
             </motion.div>
           </motion.div>

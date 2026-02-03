@@ -267,8 +267,8 @@ function BookingConfirmationContent() {
                 </ul>
                 <p className="mt-3 text-sm text-gray-500">
                   Pro zrušení rezervace nás kontaktujte na{' '}
-                  <a href="tel:+420123456789" className="text-primary-600 hover:underline">
-                    +420 123 456 789
+                  <a href="tel:+420601532676" className="text-primary-600 hover:underline">
+                    +420 601 532 676
                   </a>
                 </p>
               </div>
