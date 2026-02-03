@@ -6,21 +6,56 @@ Moderní webové stránky pro ordinaci dentální hygieny vytvořené v Next.js 
 
 **Google Calendar = Single Source of Truth**
 
-Projekt používá Google Calendar jako jediný zdroj pravdy pro rezervace. Žádná databáze není potřeba.
+Projekt používá Google Calendar jako jediný zdroj pravdy pro rezervace. Žádná databáze není potřeba. Kalendář je sdílený s programem **SmartMEDIX** pro oboustrannou synchronizaci.
+
+```
+┌─────────────────────┐              ┌──────────────────────┐
+│   Web (Ordinace)    │              │   SmartMEDIX         │
+│   Next.js app       │              │   Desktop app        │
+│                     │              │                      │
+│  [Booking Form]     │              │  [Plánovač]          │
+│       ↓             │              │       ↕              │
+│  [Comgate platba]   │              │  [Lokální DB]        │
+│       ↓ (po platbě) │              │       ↕              │
+│  [Google Cal API]───┼──────────────┼──[Google Cal sync]   │
+└─────────────────────┘              └──────────────────────┘
+                    ↘                ↙
+              ┌─────────────────────────────┐
+              │      GOOGLE CALENDAR        │
+              │   (Single Source of Truth)  │
+              │                             │
+              │  Event = Rezervace          │
+              │  - Summary: Služba + Jméno  │
+              │  - Description: Kontakty    │
+              │  - Color: Status platby     │
+              │  - Zdroj: WEB / SmartMEDIX  │
+              └─────────────────────────────┘
+```
+
+### Klíčové principy
+
+- **SmartMEDIX = primární zdroj pravdy** - v případě konfliktu platí data z Medix
+- **Platba = podmínka pro rezervaci** - GCal event se vytváří POUZE po úspěšné platbě
+- **Žádné "ghost" eventy** - nedokončené platby nevytváří záznamy v kalendáři
+- **Zdroj: WEB** - webové rezervace jsou označeny pro rozlišení od SmartMEDIX
+
+### Event struktura
 
 ```
 Rezervace (Booking) = Google Calendar Event
     ↓
-Booking ID = Event ID
+Event Summary: "Služba - Jméno zákazníka"
     ↓
 Event Description obsahuje strukturovaná data:
   - Jméno, Email, Telefon zákazníka
-  - Status platby, Kauce, Service ID
+  - Status platby, Kauce (ZAPLACENO)
+  - ServiceID, Poznámky
+  - Zdroj: WEB
     ↓
 Event Color = Status:
-  - Orange = PENDING_PAYMENT
-  - Green = PAID
-  - Red = CANCELLED
+  - Green (10) = PAID (zaplaceno)
+  - Orange (6) = PENDING_PAYMENT (čeká na platbu)
+  - Red (11) = CANCELLED (zrušeno)
 ```
 
 ## Funkce
@@ -35,6 +70,7 @@ Event Color = Status:
 - **Comgate platební integrace** - online platby kauce s automatickým potvrzením rezervace
 - **Email notifikace** - Nodemailer/SMTP integrace pro potvrzovací emaily a připomínky
 - **Google Calendar integrace** - rezervace jako události, real-time dostupnost
+- **SmartMEDIX kompatibilita** - oboustranná synchronizace s ordinačním systémem
 
 ## Struktura stránek
 
@@ -70,16 +106,26 @@ Event Color = Status:
 | `/ochrana-osobnich-udaju` | GDPR informace |
 | `/pristupnost` | Prohlášení o přístupnosti |
 
+### Booking stránky
+| Stránka | Popis |
+|---------|-------|
+| `/objednavka` | Rezervační formulář |
+| `/objednavka/uspech` | Potvrzení úspěšné rezervace |
+| `/objednavka/zruseno` | Zrušená/neúspěšná platba |
+| `/objednavka/chyba` | Error page (expirovaná rezervace, chyba platby) |
+
 ## Technologie
 
 - **Framework:** [Next.js 14](https://nextjs.org/) (App Router)
 - **Jazyk:** [TypeScript](https://www.typescriptlang.org/)
 - **Styling:** [Tailwind CSS](https://tailwindcss.com/)
 - **UI komponenty:** Vlastní komponenty s [Radix UI](https://www.radix-ui.com/)
+- **Animace:** [Framer Motion](https://www.framer.com/motion/)
 - **Fonty:** Inter (body), Playfair Display (headings)
 - **Kalendář:** [Google Calendar API](https://developers.google.com/calendar) - single source of truth
 - **Platby:** [Comgate](https://www.comgate.cz/) Payment Gateway
 - **Email:** [Nodemailer](https://nodemailer.com/) s lokálním SMTP (Postfix)
+- **Ordinační systém:** [SmartMEDIX](https://www.smartmedix.cz/) - kompatibilita přes Google Calendar
 
 ## API Endpoints
 
@@ -96,7 +142,7 @@ Event Color = Status:
 ### Rezervace
 | Endpoint | Metoda | Popis |
 |----------|--------|-------|
-| `/api/bookings` | POST | Vytvoření rezervace (→ Google Calendar event) |
+| `/api/bookings` | POST | Vytvoření pending rezervace (vrací pendingBookingId) |
 | `/api/bookings/[id]` | GET | Detail rezervace z kalendáře |
 | `/api/bookings/[id]` | PATCH | Aktualizace stavu rezervace |
 | `/api/bookings/[id]/cancel` | POST | Zrušení rezervace s emailem |
@@ -104,8 +150,9 @@ Event Color = Status:
 ### Platby
 | Endpoint | Metoda | Popis |
 |----------|--------|-------|
-| `/api/payments/create` | POST | Vytvoření Comgate platby |
-| `/api/webhooks/comgate` | POST | Webhook pro platební notifikace |
+| `/api/payments/create` | GET | Vytvoření platby (redirect z formuláře) |
+| `/api/payments/create` | POST | Vytvoření platby (programmatic) |
+| `/api/webhooks/comgate` | POST | Webhook - vytvoří GCal event po úspěšné platbě |
 
 ### Cron Jobs
 | Endpoint | Metoda | Popis |
@@ -116,7 +163,7 @@ Event Color = Status:
 
 ```bash
 # Klonování repozitáře
-git clone https://github.com/user/ordinace-dental.git
+git clone https://github.com/LucaBras1/ordinace-dental.git
 cd ordinace-dental
 
 # Instalace závislostí
@@ -171,6 +218,29 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 5. Vytvořit kalendář pro rezervace v Google Calendar
 6. Zkopírovat Calendar ID z nastavení kalendáře
 
+### SmartMEDIX Setup
+
+Pro integraci se SmartMEDIX (dle manuálu str. 8153-8235):
+
+1. **Google Cloud Console:**
+   - Vytvořit OAuth2 credentials (Credentials → Create → OAuth Client ID → Other)
+   - Stáhnout JSON soubor s credentials
+
+2. **SmartMEDIX:**
+   - Otevřít Konfigurace → Google kalendář
+   - Vybrat lékaře a kliknout "Načíst konfiguraci"
+   - Vybrat stažený JSON soubor
+   - Kliknout "Přihlášení" → vygeneruje se URL
+   - Otevřít URL v prohlížeči, přihlásit se Google účtem
+   - Zkopírovat autorizační kód zpět do SmartMEDIX
+   - **Vybrat STEJNÝ kalendář jako webová aplikace** (`GOOGLE_CALENDAR_ID`)
+   - Zaškrtnout "Kalendář je aktivní"
+
+3. **Ověření:**
+   - Vytvořit testovací rezervaci v SmartMEDIX
+   - Ověřit, že se objeví v Google Calendar
+   - Na webu ověřit, že slot je obsazený
+
 ## Struktura projektu
 
 ```
@@ -190,6 +260,10 @@ src/
 │   ├── cenik/             # Ceník
 │   ├── o-nas/             # O nás
 │   ├── objednavka/        # Online rezervace
+│   │   ├── page.tsx       # Booking form
+│   │   ├── uspech/        # Success page
+│   │   ├── zruseno/       # Cancelled page
+│   │   └── chyba/         # Error page
 │   └── ...                # Další stránky
 ├── components/
 │   ├── layout/            # Header, Footer
@@ -199,6 +273,7 @@ src/
 ├── hooks/                 # Custom React hooks
 ├── lib/
 │   ├── google-calendar.ts # Google Calendar API integrace
+│   ├── pending-bookings.ts # In-memory storage před platbou
 │   ├── services.ts        # Hardcoded služby
 │   ├── comgate.ts         # Comgate platební integrace
 │   ├── email.ts           # Nodemailer email integrace
@@ -223,16 +298,31 @@ Služby jsou definovány v `src/lib/services.ts`:
 ```
 1. Zákazník vybere službu a termín
    ↓
-2. POST /api/bookings → vytvoří Google Calendar event (oranžový)
+2. POST /api/bookings → uloží do pending storage (30min TTL)
    ↓
-3. Redirect na Comgate platební bránu
+3. Redirect na GET /api/payments/create → Comgate platební brána
    ↓
 4. Zákazník zaplatí kauci
    ↓
-5. Comgate webhook → aktualizuje event (zelený = PAID)
+5. Comgate webhook (PAID) → vytvoří Google Calendar event (zelený)
    ↓
 6. Email potvrzení zákazníkovi
+   ↓
+7. Rezervace viditelná v SmartMEDIX
+
+❌ Při neúspěšné platbě (CANCELLED/TIMEOUT):
+   - Pending booking se smaže
+   - ŽÁDNÝ Google Calendar event se nevytváří
+   - Slot zůstává volný
 ```
+
+### Pending Bookings
+
+Před zaplacením jsou data rezervace uložena v `pending-bookings.ts`:
+- In-memory Map storage
+- UUID klíč (použit jako `refId` pro Comgate)
+- 30 minutové TTL
+- Automatický cleanup každých 5 minut
 
 ## UI Komponenty
 
@@ -291,10 +381,36 @@ E2E testy pokrývají celý booking flow:
 
 | Email | Kdy se odesílá |
 |-------|----------------|
-| Booking Confirmation | Po vytvoření rezervace (s platebním linkem) |
-| Payment Confirmation | Po úspěšné platbě kauce |
+| Payment Confirmation | Po úspěšné platbě kauce (z webhook) |
 | Reminder | 24h před termínem |
-| Cancellation | Při zrušení rezervace |
+| Cancellation | Při zrušení rezervace / neúspěšné platbě |
+
+## SmartMEDIX Integrace
+
+### Jak to funguje
+
+1. **Web rezervace:**
+   - Zákazník vyplní formulář na webu
+   - Po platbě se vytvoří GCal event s `Zdroj: WEB`
+   - Event se automaticky synchronizuje do SmartMEDIX
+
+2. **SmartMEDIX rezervace:**
+   - Lékař/recepce vytvoří rezervaci v SmartMEDIX
+   - Event se synchronizuje do Google Calendar
+   - Na webu se slot zobrazí jako obsazený
+
+3. **Zrušení:**
+   - Při zrušení v SmartMEDIX → event zmizí z GCal → slot volný na webu
+   - Při zrušení přes web → email zákazníkovi, event aktualizován
+
+### Rozlišení zdrojů
+
+Webové rezervace obsahují v description:
+```
+Zdroj: WEB
+```
+
+SmartMEDIX rezervace tento řádek nemají, což umožňuje rozlišit původ.
 
 ## Barevná paleta
 
@@ -310,6 +426,20 @@ Projekt je připraven pro deployment na:
 - Vercel (doporučeno)
 - Netlify
 - VPS s Node.js
+
+### Důležité poznámky pro produkci
+
+1. **Pending bookings persistence:**
+   - Aktuálně in-memory storage
+   - Při restartu serveru se pending bookings ztratí
+   - Pro HA deployment zvážit Redis
+
+2. **Environment variables:**
+   - Všechny `GOOGLE_*` proměnné musí být nastaveny
+   - `COMGATE_TEST_MODE=false` pro produkci
+
+3. **CRON job:**
+   - Nastavit cron pro `/api/cron/send-reminders` (každou hodinu)
 
 ## Licence
 
