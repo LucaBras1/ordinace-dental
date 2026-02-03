@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
-import { spring, staggerContainer, fadeInUp } from '@/lib/animations'
+import { spring, staggerContainer } from '@/lib/animations'
 import Link from 'next/link'
 
 export interface BreadcrumbItem {
@@ -48,8 +48,8 @@ function AnimatedBreadcrumbs({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaData) }}
         />
-        <nav aria-label="Breadcrumb" className="mb-4">
-          <ol className="flex flex-wrap items-center justify-center gap-2 text-sm text-gray-500">
+        <nav aria-label="Breadcrumb">
+          <ol className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
             {items.map((item, index) => (
               <li key={index} className="flex items-center gap-2">
                 {index > 0 && (
@@ -96,12 +96,11 @@ function AnimatedBreadcrumbs({
       />
       <motion.nav
         aria-label="Breadcrumb"
-        className="mb-4"
         initial="hidden"
         animate="visible"
         variants={staggerContainer}
       >
-        <ol className="flex flex-wrap items-center justify-center gap-2 text-sm text-gray-500">
+        <ol className="flex flex-wrap items-center gap-2 text-sm text-gray-500">
           {items.map((item, index) => (
             <motion.li
               key={index}
@@ -232,65 +231,73 @@ export function PageHeader({
   const shouldShowBreadcrumbs = showBreadcrumbs && breadcrumbs && breadcrumbs.length > 0
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-primary-50 via-white to-accent-50 py-16 md:py-20">
-      {/* Animated decorative elements */}
-      <motion.div
-        className="absolute -left-20 -top-20 h-64 w-64 rounded-full bg-primary-100/50 blur-3xl"
-        initial={prefersReducedMotion ? {} : { scale: 0.8, opacity: 0 }}
-        animate={prefersReducedMotion ? {} : { scale: 1, opacity: 1 }}
-        transition={{ duration: 1, ease: 'easeOut' }}
-      />
-      <motion.div
-        className="absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-accent-100/50 blur-3xl"
-        initial={prefersReducedMotion ? {} : { scale: 0.8, opacity: 0 }}
-        animate={prefersReducedMotion ? {} : { scale: 1, opacity: 1 }}
-        transition={{ duration: 1, ease: 'easeOut', delay: 0.2 }}
-      />
-
-      <div className="container-custom relative">
-        {shouldShowBreadcrumbs && breadcrumbs && (
-          <AnimatedBreadcrumbs
-            items={breadcrumbs}
-            prefersReducedMotion={prefersReducedMotion}
-          />
-        )}
-
-        <div className={centered ? 'text-center' : ''}>
-          <AnimatedTitle
-            prefersReducedMotion={prefersReducedMotion}
-            hasBreadcrumbs={!!shouldShowBreadcrumbs}
-          >
-            {title}
-          </AnimatedTitle>
-
-          {subtitle && (
-            <motion.p
-              className="body-large mx-auto mt-4 max-w-2xl text-balance"
-              initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
-              animate={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
-              transition={{
-                ...spring.smooth,
-                delay: 0.5,
-              }}
-            >
-              {subtitle}
-            </motion.p>
-          )}
-
-          {/* Animated underline */}
-          <motion.div
-            className="mx-auto mt-6 h-1 w-20 rounded-full bg-gradient-to-r from-primary-400 to-accent-400"
-            initial={prefersReducedMotion ? {} : { scaleX: 0, opacity: 0 }}
-            animate={prefersReducedMotion ? {} : { scaleX: 1, opacity: 1 }}
-            transition={{
-              duration: 0.6,
-              delay: 0.7,
-              ease: [0.19, 1, 0.22, 1],
-            }}
-            style={{ transformOrigin: 'center' }}
-          />
+    <>
+      {/* Breadcrumb strip - separate section above hero */}
+      {shouldShowBreadcrumbs && breadcrumbs && (
+        <div className="bg-gray-50/80 border-b border-gray-100 pt-24 md:pt-28 pb-3">
+          <div className="container-custom">
+            <AnimatedBreadcrumbs
+              items={breadcrumbs}
+              prefersReducedMotion={prefersReducedMotion}
+            />
+          </div>
         </div>
-      </div>
-    </section>
+      )}
+
+      {/* Main hero section */}
+      <section className={`relative overflow-hidden bg-gradient-to-br from-primary-50 via-white to-accent-50 ${shouldShowBreadcrumbs ? 'py-12 md:py-16' : 'py-16 md:py-20'}`}>
+        {/* Animated decorative elements */}
+        <motion.div
+          className="absolute -left-20 -top-20 h-64 w-64 rounded-full bg-primary-100/50 blur-3xl"
+          initial={prefersReducedMotion ? {} : { scale: 0.8, opacity: 0 }}
+          animate={prefersReducedMotion ? {} : { scale: 1, opacity: 1 }}
+          transition={{ duration: 1, ease: 'easeOut' }}
+        />
+        <motion.div
+          className="absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-accent-100/50 blur-3xl"
+          initial={prefersReducedMotion ? {} : { scale: 0.8, opacity: 0 }}
+          animate={prefersReducedMotion ? {} : { scale: 1, opacity: 1 }}
+          transition={{ duration: 1, ease: 'easeOut', delay: 0.2 }}
+        />
+
+        <div className="container-custom relative">
+          <div className={centered ? 'text-center' : ''}>
+            <AnimatedTitle
+              prefersReducedMotion={prefersReducedMotion}
+              hasBreadcrumbs={false}
+            >
+              {title}
+            </AnimatedTitle>
+
+            {subtitle && (
+              <motion.p
+                className="body-large mx-auto mt-4 max-w-2xl text-balance"
+                initial={prefersReducedMotion ? {} : { opacity: 0, y: 20 }}
+                animate={prefersReducedMotion ? {} : { opacity: 1, y: 0 }}
+                transition={{
+                  ...spring.smooth,
+                  delay: 0.5,
+                }}
+              >
+                {subtitle}
+              </motion.p>
+            )}
+
+            {/* Animated underline */}
+            <motion.div
+              className="mx-auto mt-6 h-1 w-20 rounded-full bg-gradient-to-r from-primary-400 to-accent-400"
+              initial={prefersReducedMotion ? {} : { scaleX: 0, opacity: 0 }}
+              animate={prefersReducedMotion ? {} : { scaleX: 1, opacity: 1 }}
+              transition={{
+                duration: 0.6,
+                delay: 0.7,
+                ease: [0.19, 1, 0.22, 1],
+              }}
+              style={{ transformOrigin: 'center' }}
+            />
+          </div>
+        </div>
+      </section>
+    </>
   )
 }
